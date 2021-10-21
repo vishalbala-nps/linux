@@ -186,7 +186,7 @@ static uint32_t *kp_CFG_TABLE_FLASH_ADDR;
 #endif
 
 #if defined(HX_RST_PIN_FUNC)
-	static void (*kp_himax_rst_gpio_set)(int pinnum, uint8_t value);
+	static void (*kp_himax_rst_gpio_set)(struct gpio_desc *pin, uint8_t value);
 #endif
 
 static struct himax_ts_data **kp_private_ts;
@@ -211,7 +211,7 @@ static int (*kp_himax_bus_write)(uint8_t command, uint8_t *data,
 static int (*kp_himax_bus_write_command)(uint8_t command, uint8_t toRetry);
 static void (*kp_himax_int_enable)(int enable);
 static int (*kp_himax_ts_register_interrupt)(void);
-static uint8_t (*kp_himax_int_gpio_read)(int pinnum);
+static uint8_t (*kp_himax_int_gpio_read)(struct gpio_desc *pin);
 static int (*kp_himax_gpio_power_config)(struct himax_i2c_platform_data *pdata);
 
 #if !defined(HX_USE_KSYM)
@@ -264,7 +264,7 @@ extern uint32_t CFG_TABLE_FLASH_ADDR;
 #endif
 
 #if defined(HX_RST_PIN_FUNC)
-	extern void (himax_rst_gpio_set)(int pinnum, uint8_t value);
+	extern void (himax_rst_gpio_set)(struct gpio_desc *pin, uint8_t value);
 #endif
 
 extern struct himax_ts_data *private_ts;
@@ -288,7 +288,7 @@ extern int (himax_bus_write)(uint8_t command, uint8_t *data, uint32_t length,
 extern int (himax_bus_write_command)(uint8_t command, uint8_t toRetry);
 extern void (himax_int_enable)(int enable);
 extern int (himax_ts_register_interrupt)(void);
-extern uint8_t (himax_int_gpio_read)(int pinnum);
+extern uint8_t (himax_int_gpio_read)(struct gpio_desc *pin);
 extern int (himax_gpio_power_config)(struct himax_i2c_platform_data *pdata);
 #endif
 

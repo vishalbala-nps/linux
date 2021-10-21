@@ -142,7 +142,7 @@ extern int g_zero_event_count;
 
 #if defined(HX_RST_PIN_FUNC)
 extern u8 HX_HW_RESET_ACTIVATE;
-void himax_rst_gpio_set(int pinnum, uint8_t value);
+void himax_rst_gpio_set(struct gpio_desc *pin, uint8_t value);
 #endif
 
 #if defined(HX_USB_DETECT_GLOBAL)

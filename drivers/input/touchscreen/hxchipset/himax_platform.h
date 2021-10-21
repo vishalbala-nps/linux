@@ -91,11 +91,11 @@ struct himax_i2c_platform_data {
 	uint8_t powerOff3V3;
 	uint8_t cable_config[2];
 	uint8_t protocol_type;
-	int gpio_irq;
-	int gpio_reset;
-	int gpio_3v3_en;
-	int gpio_pon;
-	int lcm_rst;
+	struct gpio_desc *gpio_irq;
+	struct gpio_desc *gpio_reset;
+	struct gpio_desc *gpio_3v3_en;
+	struct gpio_desc *gpio_pon;
+	struct gpio_desc *lcm_rst;
 	int (*power)(int on);
 	void (*reset)(void);
 	struct himax_virtual_key *virtual_key;
@@ -127,7 +127,7 @@ extern int himax_bus_write_command(uint8_t command,
 extern void himax_int_enable(int enable);
 extern int himax_ts_register_interrupt(void);
 int himax_ts_unregister_interrupt(void);
-extern uint8_t himax_int_gpio_read(int pinnum);
+extern uint8_t himax_int_gpio_read(struct gpio_desc *pin);
 extern int himax_gpio_power_config(struct himax_i2c_platform_data *pdata);
 void himax_gpio_power_deconfig(struct himax_i2c_platform_data *pdata);
 
