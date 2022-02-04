@@ -32,6 +32,7 @@
 #include <sound/tlv.h>
 #include <sound/control.h>
 #include <linux/uaccess.h>
+#include <linux/pinctrl/consumer.h>
 #include "aw882xx.h"
 #include "aw882xx_reg.h"
 #include "awinic_cali.h"
@@ -66,7 +67,7 @@
 static DEFINE_MUTEX(g_aw_copp_lock);
 unsigned int g_copp_en = 0;
 
-extern int i2c_check_status_create(char *name,int value);
+//extern int i2c_check_status_create(char *name,int value);
 bool aw882xx_i2c_check = false;
 static int aw_select_pin_ctl(struct aw882xx *aw882xx, const char *name);
 /******************************************************
@@ -94,18 +95,14 @@ static unsigned int aw882xx_mode_cfg_shift[AW882XX_MODE_SHIFT_MAX] = {
  ******************************************************/
 #ifdef AW_KERNEL_VER_OVER_4_19_1
 static const struct aw_componet_codec_ops aw_componet_codec_ops = {
-	.aw_snd_soc_kcontrol_codec = snd_soc_kcontrol_component,
 	.aw_snd_soc_codec_get_drvdata = snd_soc_component_get_drvdata,
 	.aw_snd_soc_add_codec_controls = snd_soc_add_component_controls,
-	.aw_snd_soc_unregister_codec = snd_soc_unregister_component,
-	.aw_snd_soc_register_codec = snd_soc_register_component,
+	.aw_snd_soc_register_codec = devm_snd_soc_register_component,
 };
 #else
 static const struct aw_componet_codec_ops aw_componet_codec_ops = {
-	.aw_snd_soc_kcontrol_codec = snd_soc_kcontrol_codec,
 	.aw_snd_soc_codec_get_drvdata = snd_soc_codec_get_drvdata,
 	.aw_snd_soc_add_codec_controls = snd_soc_add_codec_controls,
-	.aw_snd_soc_unregister_codec = snd_soc_unregister_codec,
 	.aw_snd_soc_register_codec = snd_soc_register_codec,
 };
 #endif
@@ -445,7 +442,7 @@ static int aw882xx_sysst_check(struct aw882xx *aw882xx)
 	return ret;
 }
 
-int aw882xx_get_sysint(struct aw882xx *aw882xx, uint16_t *sysint)
+static int aw882xx_get_sysint(struct aw882xx *aw882xx, uint16_t *sysint)
 {
 	int ret = -1;
 	unsigned int reg_val = 0;
@@ -774,7 +771,7 @@ static int aw882xx_load_reg(struct aw882xx *aw882xx)
 {
 	aw_dev_info(aw882xx->dev, "%s: enter\n", __func__);
 
-	return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
+	return request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
 		aw882xx->chan_info.bin_cfg_name[aw882xx->cfg_num],
 		aw882xx->dev, GFP_KERNEL,
 		aw882xx, aw882xx_reg_loaded);
@@ -911,8 +908,7 @@ static int aw882xx_volume_info(struct snd_kcontrol *kcontrol,
 static int aw882xx_volume_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 	unsigned int reg_val = 0;
@@ -931,8 +927,7 @@ static int aw882xx_volume_put(struct snd_kcontrol *kcontrol,
 {
 	struct soc_mixer_control *mc =
 		(struct soc_mixer_control *) kcontrol->private_value;
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 	unsigned int value = 0;
@@ -979,8 +974,7 @@ static struct snd_kcontrol_new aw882xx_volume = {
 static int aw882xx_mode_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 
@@ -995,8 +989,7 @@ static int aw882xx_mode_get(struct snd_kcontrol *kcontrol,
 static int aw882xx_mode_set(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 
@@ -1020,8 +1013,7 @@ static int aw882xx_rx_enable_get(struct snd_kcontrol *kcontrol,
 	int ret = -EINVAL;
 	uint32_t ctrl_value = 0;
 
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 
@@ -1042,8 +1034,7 @@ static int aw882xx_rx_enable_set(struct snd_kcontrol *kcontrol,
 {
 	int ret = -EINVAL;
 	uint32_t ctrl_value = 0;
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 
@@ -1064,8 +1055,7 @@ static int aw882xx_tx_enable_get(struct snd_kcontrol *kcontrol,
 {
 	int ret = -EINVAL;
 	uint32_t ctrl_value = 0;
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 
@@ -1087,8 +1077,7 @@ static int aw882xx_tx_enable_set(struct snd_kcontrol *kcontrol,
 	int ret = -EINVAL;
 	uint32_t ctrl_value = 0;
 
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 
@@ -1108,8 +1097,7 @@ static int aw882xx_tx_enable_set(struct snd_kcontrol *kcontrol,
 static int aw882xx_pa_switch_get(struct snd_kcontrol *kcontrol,
 		struct snd_ctl_elem_value *ucontrol)
 {
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 	int *pa_switch_ptr = &aw882xx->aw882xx_pa_switch;
@@ -1126,8 +1114,7 @@ static int aw882xx_pa_switch_set(struct snd_kcontrol *kcontrol,
 		struct snd_ctl_elem_value *ucontrol)
 {
 	int ret;
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 	int *aw882xx_pa_switch = &aw882xx->aw882xx_pa_switch;
@@ -1167,8 +1154,7 @@ static int aw882xx_copp_en_set(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
 	int ret = -EINVAL;
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 
@@ -1190,8 +1176,7 @@ static int aw882xx_copp_en_set(struct snd_kcontrol *kcontrol,
 static int aw882xx_copp_en_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 
@@ -1207,8 +1192,7 @@ static int aw882xx_copp_en_get(struct snd_kcontrol *kcontrol,
 static int aw882xx_hagc_en_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 
@@ -1219,8 +1203,7 @@ static int aw882xx_hagc_en_get(struct snd_kcontrol *kcontrol,
 static int aw882xx_hagc_en_set(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	aw_snd_soc_codec_t *codec =
-		aw_componet_codec_ops.aw_snd_soc_kcontrol_codec(kcontrol);
+	aw_snd_soc_codec_t *codec = snd_kcontrol_chip(kcontrol);
 	struct aw882xx *aw882xx =
 		aw_componet_codec_ops.aw_snd_soc_codec_get_drvdata(codec);
 
@@ -1293,7 +1276,7 @@ static void aw882xx_kcontrol_append_suffix(struct aw882xx *aw882xx,
 						dst_control, num);
 }
 
-void aw882xx_add_codec_controls(struct aw882xx *aw882xx)
+static void aw882xx_add_codec_controls(struct aw882xx *aw882xx)
 {
 	aw_dev_info(aw882xx->dev, "%s: enter\n", __func__);
 
@@ -1334,7 +1317,7 @@ static int aw882xx_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
 	case SND_SOC_DAIFMT_I2S:
 		if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) !=
-			SND_SOC_DAIFMT_CBS_CFS) {
+			SND_SOC_DAIFMT_CBC_CFC) {
 			aw_dev_err(codec->dev, "%s: invalid codec master mode\n",
 				__func__);
 			return -EINVAL;
@@ -1531,7 +1514,7 @@ static struct snd_soc_dai_driver aw882xx_dai[] = {
 			.formats = AW882XX_FORMATS,
 		 },
 		.ops = &aw882xx_dai_ops,
-		.symmetric_rates = 1,
+		.symmetric_rate = 1,
 	},
 };
 
@@ -1760,7 +1743,7 @@ static void aw882xx_parse_dt(struct device *dev, struct aw882xx *aw882xx,
 	aw882xx_parse_monitor_dt(&aw882xx->monitor);
 }
 
-void aw882xx_hw_reset(struct aw882xx *aw882xx)
+static void aw882xx_hw_reset(struct aw882xx *aw882xx)
 {
     aw_dev_info(aw882xx->dev, "%s: enter\n", __func__);
     if (IS_ERR(aw882xx->aw_pinctrl)) {
@@ -1988,8 +1971,7 @@ static int aw_select_pin_ctl(struct aw882xx *aw882xx, const char *name)
  * i2c driver
  *
  ******************************************************/
-static int aw882xx_i2c_probe(struct i2c_client *i2c,
-	const struct i2c_device_id *id)
+static int aw882xx_i2c_probe(struct i2c_client *i2c)
 {
     struct snd_soc_dai_driver *dai = NULL;
     struct aw882xx *aw882xx = NULL;
@@ -2030,7 +2012,7 @@ static int aw882xx_i2c_probe(struct i2c_client *i2c,
     aw882xx->aw_pinctrl = devm_pinctrl_get(aw882xx->dev);
     if (IS_ERR(aw882xx->aw_pinctrl)) {
         ret = PTR_ERR(aw882xx->aw_pinctrl);
-        aw_dev_err(aw882xx->dev,  "Cannot get pinctrl\n", ret);
+        aw_dev_err(aw882xx->dev,  "Cannot get pinctrl: %d\n", ret);
         return ret;
     }
 
@@ -2070,7 +2052,7 @@ static int aw882xx_i2c_probe(struct i2c_client *i2c,
 			return ret;
 
 		ret = devm_gpio_request_one(&i2c->dev, aw882xx->irq_gpio,
-			GPIOF_DIR_IN, aw882xx_int);
+			GPIOF_IN, aw882xx_int);
 		if (ret) {
 			aw_dev_err(&i2c->dev, "%s: int request failed\n",
 				__func__);
@@ -2173,22 +2155,21 @@ static int aw882xx_i2c_probe(struct i2c_client *i2c,
 	aw882xx->is_power_on = AW882XX_PA_CLOSE_ST;
 	aw_dev_dbg(aw882xx->dev, "%s: probe completed successfully!\n",
 		__func__);
-	if(!aw882xx_i2c_check)
-	{
-		i2c_check_status_create("audio_smpart_pa",1);
-		aw882xx_i2c_check = true;
-	}
+	//if(!aw882xx_i2c_check)
+	//{
+	//	i2c_check_status_create("audio_smpart_pa",1);
+	//	aw882xx_i2c_check = true;
+	//}
 	return 0;
 
 
 err_sysfs:
 err_irq:
-	aw_componet_codec_ops.aw_snd_soc_unregister_codec(&i2c->dev);
 
 	return ret;
 }
 
-static int aw882xx_i2c_remove(struct i2c_client *i2c)
+static void aw882xx_i2c_remove(struct i2c_client *i2c)
 {
 	struct aw882xx *aw882xx = i2c_get_clientdata(i2c);
 
@@ -2196,10 +2177,6 @@ static int aw882xx_i2c_remove(struct i2c_client *i2c)
 
 	aw_cali_deinit(&aw882xx->cali);
 	aw882xx_monitor_deinit(&aw882xx->monitor);
-
-	aw_componet_codec_ops.aw_snd_soc_unregister_codec(&i2c->dev);
-
-	return 0;
 }
 
 static const struct i2c_device_id aw882xx_i2c_id[] = {
@@ -2214,6 +2191,7 @@ static struct of_device_id aw882xx_dt_match[] = {
 	{ .compatible = "awinic,aw882xx_smartpa_r" },
 	{ },
 };
+MODULE_DEVICE_TABLE(of, aw882xx_dt_match);
 
 static struct i2c_driver aw882xx_i2c_driver = {
 	.driver = {
