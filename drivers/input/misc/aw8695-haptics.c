@@ -6,15 +6,13 @@
  *   Copyright (c) 2018 AWINIC Technology CO., LTD
  */
 
+#include <linux/bitfield.h>
 #include <linux/delay.h>
-#include <linux/firmware.h>
 #include <linux/gpio/consumer.h>
 #include <linux/i2c.h>
 #include <linux/input.h>
 #include <linux/module.h>
 #include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
 
 #define AW8695_CHIPID			0x95
 #define AW8695_RESET			0xaa
@@ -602,11 +600,8 @@ static int aw8695_set_work_mode(struct aw8695_data *haptics,
 			AW8695_SYSINTM_UVLO_OFF, AW8695_SYSINTM_UVLO_OFF);
 		if (err)
 			return err;
-		err = regmap_update_bits(haptics->regmap, AW8695_SYSCTRL,
+		return regmap_update_bits(haptics->regmap, AW8695_SYSCTRL,
 			AW8695_SYSCTRL_WORK_MODE_MASK, AW8695_SYSCTRL_STANDBY);
-		if (err)
-			return err;
-		break;
 	case AW8695_RAM_MODE:
 		err = regmap_update_bits(haptics->regmap, AW8695_SYSCTRL,
 			AW8695_SYSCTRL_PLAY_MODE_MASK, AW8695_SYSCTRL_PLAY_MODE_RAM);
@@ -616,10 +611,7 @@ static int aw8695_set_work_mode(struct aw8695_data *haptics,
 			AW8695_SYSCTRL_BST_MODE_MASK, AW8695_SYSCTRL_BST_MODE_BYPASS);
 		if (err)
 			return err;
-		err = aw8695_haptic_set_active(haptics);
-		if (err)
-			return err;
-		break;
+		return aw8695_haptic_set_active(haptics);
 	case AW8695_CONT_MODE:
 		err = regmap_update_bits(haptics->regmap, AW8695_SYSCTRL,
 			AW8695_SYSCTRL_PLAY_MODE_MASK, AW8695_SYSCTRL_PLAY_MODE_CONT);
@@ -629,16 +621,11 @@ static int aw8695_set_work_mode(struct aw8695_data *haptics,
 			AW8695_SYSCTRL_BST_MODE_MASK, AW8695_SYSCTRL_BST_MODE_BYPASS);
 		if (err)
 			return err;
-		err = aw8695_haptic_set_active(haptics);
-		if (err)
-			return err;
-		break;
+		return aw8695_haptic_set_active(haptics);
 	default:
 		dev_err(dev, "Unhandled mode: %d\n", mode);
 		return -EINVAL;
 	}
-
-	return err;
 }
 
 static int aw8695_haptics_play(struct input_dev *dev, void *data,
@@ -749,16 +736,12 @@ static void aw8695_haptics_play_work(struct work_struct *work)
 
 static void aw8695_hw_reset(struct aw8695_data *haptics)
 {
-	/* Pull reset low */
-	gpiod_set_value_cansleep(haptics->reset_gpio, 0);
-
-	/* Wait ~1ms */
-	usleep_range(1000, 2000);
-
-	/* Pull reset high */
 	gpiod_set_value_cansleep(haptics->reset_gpio, 1);
 
-	/* Wait ~3.5ms until I2C is accessible */
+	usleep_range(1000, 2000);
+
+	gpiod_set_value_cansleep(haptics->reset_gpio, 0);
+
 	usleep_range(3500, 4000);
 }
 
@@ -913,6 +896,8 @@ static int aw8695_haptic_get_f0(struct aw8695_data *haptics)
 	}
 
 	f0 = aw8695_haptic_read_f0(haptics);
+	if (f0 < 0)
+		return f0;
 
 	/* restore default config */
 	err = regmap_update_bits(haptics->regmap, AW8695_CONT_CTRL,
@@ -927,7 +912,6 @@ static int aw8695_haptic_get_f0(struct aw8695_data *haptics)
 	return f0;
 }
 
-
 static int aw8695_haptic_f0_calibration(struct aw8695_data *haptics)
 {
 	struct device *dev = &haptics->client->dev;
@@ -935,7 +919,6 @@ static int aw8695_haptic_f0_calibration(struct aw8695_data *haptics)
 	int f0_cali_step, f0_limit, f0;
 	char f0_cali_lra;
 	int err;
-
 
 	f0 = aw8695_haptic_get_f0(haptics);
 	if (f0 < 0) {
@@ -1203,7 +1186,7 @@ static irqreturn_t aw8695_irq(int irq, void *data)
 	err = regmap_read(haptics->regmap, AW8695_SYSINT, &read_buf);
 	if (err) {
 		dev_err(dev, "Failed to read SYSINT register: %d\n", err);
-		return err;
+		return IRQ_NONE;
 	}
 	dev_dbg(dev, "Interrupt: SYSINT=0x%x\n", read_buf);
 
@@ -1229,14 +1212,14 @@ static irqreturn_t aw8695_irq(int irq, void *data)
 	err = regmap_read(haptics->regmap, AW8695_DBGSTAT, &read_buf);
 	if (err) {
 		dev_err(dev, "Failed to read DBGSTAT register: %d\n", err);
-		return err;
+		return IRQ_NONE;
 	}
 	dev_dbg(dev, "Interrupt: DBGSTAT=0x%x\n", read_buf);
 
 	err = regmap_read(haptics->regmap, AW8695_SYSST, &read_buf);
 	if (err) {
 		dev_err(dev, "Failed to read SYSST register: %d\n", err);
-		return err;
+		return IRQ_NONE;
 	}
 	dev_dbg(dev, "Interrupt: SYSST=0x%x\n", read_buf);
 
