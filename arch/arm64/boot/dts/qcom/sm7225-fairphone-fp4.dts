@@ -663,7 +663,7 @@
 		compatible = "awinic,aw8695";
 		reg = <0x5a>;
 		interrupts-extended = <&tlmm 85 IRQ_TYPE_EDGE_FALLING>;
-		reset-gpios = <&tlmm 90 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&tlmm 90 GPIO_ACTIVE_LOW>;
 
 		awinic,f0-preset = <2350>;
 		awinic,f0-coefficient = <260>;
