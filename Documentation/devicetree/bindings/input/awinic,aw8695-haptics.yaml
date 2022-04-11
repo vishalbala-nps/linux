@@ -22,7 +22,7 @@ properties:
 
   reset-gpios:
     maxItems: 1
-    description: GPIO connected to RSTN pin (active high)
+    description: GPIO connected to RSTN pin (active low)
 
   awinic,f0-preset:
     $ref: /schemas/types.yaml#/definitions/uint32
@@ -111,7 +111,7 @@ examples:
             compatible = "awinic,aw8695";
             reg = <0x5a>;
             interrupts-extended = <&tlmm 85 IRQ_TYPE_EDGE_FALLING>;
-            reset-gpios = <&tlmm 90 GPIO_ACTIVE_HIGH>;
+            reset-gpios = <&tlmm 90 GPIO_ACTIVE_LOW>;
 
             awinic,f0-preset = <2350>;
             awinic,f0-coefficient = <260>;
