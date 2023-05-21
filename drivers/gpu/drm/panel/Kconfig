@@ -855,6 +855,15 @@ config DRM_PANEL_SAMSUNG_SOFEF00
 
 	  The panels are 2280x1080@60Hz and 2340x1080@60Hz respectively
 
+config DRM_PANEL_SAMSUNG_SOFEF01
+       tristate "Samsung sofef01 panels"
+       depends on OF
+       depends on DRM_MIPI_DSI
+       depends on BACKLIGHT_CLASS_DEVICE
+       select VIDEOMODE_HELPERS
+       help
+         Say Y or M here -- TODO
+
 config DRM_PANEL_SEIKO_43WVF1G
 	tristate "Seiko 43WVF1G panel"
 	depends on OF
