@@ -944,17 +944,15 @@
 	connector {
 		compatible = "usb-c-connector";
 
-		power-role = "dual";
+		power-role = "source";
 		data-role = "dual";
 		self-powered;
 
-		/*
-		 * Disable USB Power Delivery for now, seems to need extra work
-		 * to support role switching while also letting the battery
-		 * charge still - without charger driver
-		 */
-		typec-power-opmode = "default";
-		pd-disable;
+		/* 5V @ 0.5A */
+		source-pdos = <PDO_FIXED(5000, 500,
+					 PDO_FIXED_DUAL_ROLE |
+					 PDO_FIXED_USB_COMM |
+					 PDO_FIXED_DATA_SWAP)>;
 
 		altmodes {
 			displayport {
