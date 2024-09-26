@@ -928,6 +928,11 @@
 	status = "okay";
 };
 
+&pm7250b_qgauge {
+	monitored-battery = <&battery>;
+	status = "okay";
+};
+
 &pm7250b_typec {
 	vdd-pdphy-supply = <&vreg_l3a>;
 
