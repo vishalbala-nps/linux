@@ -14,6 +14,7 @@
 #include <linux/slab.h>
 
 #include <sound/asound.h>
+#include <sound/jack.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
 #include <sound/q6usboffload.h>
@@ -30,6 +31,7 @@
 struct q6usb_port_data {
 	struct q6afe_usb_cfg usb_cfg;
 	struct snd_soc_usb *usb;
+	struct snd_soc_jack *hs_jack;
 	struct q6usb_offload priv;
 
 	/* Protects against operations between SOC USB and ASoC */
@@ -142,11 +144,49 @@ static int q6usb_alsa_connection_cb(struct snd_soc_usb *usb,
 
 	mutex_lock(&data->mutex);
 	if (connected) {
+		if (data->hs_jack)
+			snd_jack_report(data->hs_jack->jack, SND_JACK_USB);
+
 		/* Selects the latest USB headset plugged in for offloading */
 		list_add_tail(&sdev->list, &data->devices);
 	} else {
 		list_del(&sdev->list);
+
+		if (data->hs_jack)
+			snd_jack_report(data->hs_jack->jack, 0);
 	}
+	mutex_unlock(&data->mutex);
+
+	return 0;
+}
+
+static void q6usb_component_disable_jack(struct q6usb_port_data *data)
+{
+	/* Offload jack has already been disabled */
+	if (!data->hs_jack)
+		return;
+
+	snd_jack_report(data->hs_jack->jack, 0);
+	data->hs_jack = NULL;
+}
+
+static void q6usb_component_enable_jack(struct q6usb_port_data *data,
+					struct snd_soc_jack *jack)
+{
+	snd_jack_report(jack->jack, !list_empty(&data->devices) ? SND_JACK_USB : 0);
+	data->hs_jack = jack;
+}
+
+static int q6usb_component_set_jack(struct snd_soc_component *component,
+				    struct snd_soc_jack *jack, void *priv)
+{
+	struct q6usb_port_data *data = dev_get_drvdata(component->dev);
+
+	mutex_lock(&data->mutex);
+	if (jack)
+		q6usb_component_enable_jack(data, jack);
+	else
+		q6usb_component_disable_jack(data);
 	mutex_unlock(&data->mutex);
 
 	return 0;
@@ -179,6 +219,7 @@ static void q6usb_component_remove(struct snd_soc_component *component)
 
 static const struct snd_soc_component_driver q6usb_dai_component = {
 	.probe = q6usb_component_probe,
+	.set_jack = q6usb_component_set_jack,
 	.remove = q6usb_component_remove,
 	.name = "q6usb-dai-component",
 	.dapm_widgets = q6usb_dai_widgets,
