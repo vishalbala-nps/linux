@@ -435,6 +435,26 @@ static struct session_data *get_session_from_id(struct msm_routing_data *data,
 
 	return NULL;
 }
+
+static bool is_usb_routing_enabled(struct msm_routing_data *data)
+{
+	int i;
+
+	/*
+	 * Loop through current sessions to see if there are active routes
+	 * to the USB_RX backend DAI.  The USB offload routing is designed
+	 * similarly to the non offload path.  If there are multiple PCM
+	 * devices associated with the ASoC platform card, only one active
+	 * path can be routed to the USB offloaded endpoint.
+	 */
+	for (i = 0; i < MAX_SESSIONS; i++) {
+		if (data->sessions[i].port_id == USB_RX)
+			return true;
+	}
+
+	return false;
+}
+
 /**
  * q6routing_stream_close() - Deregister a stream
  *
@@ -499,7 +519,8 @@ static int msm_routing_put_audio_mixer(struct snd_kcontrol *kcontrol,
 	struct session_data *session = &data->sessions[session_id];
 
 	if (ucontrol->value.integer.value[0]) {
-		if (session->port_id == be_id)
+		if (session->port_id == be_id ||
+		    (be_id == USB_RX && is_usb_routing_enabled(data)))
 			return 0;
 
 		session->port_id = be_id;
@@ -514,6 +535,9 @@ static int msm_routing_put_audio_mixer(struct snd_kcontrol *kcontrol,
 
 	return 1;
 }
+
+static const struct snd_kcontrol_new usb_mixer_controls[] = {
+	Q6ROUTING_RX_MIXERS(USB_RX) };
 
 static const struct snd_kcontrol_new hdmi_mixer_controls[] = {
 	Q6ROUTING_RX_MIXERS(HDMI_RX) };
@@ -950,6 +974,10 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	SND_SOC_DAPM_MIXER("MultiMedia8 Mixer", SND_SOC_NOPM, 0, 0,
 		mmul8_mixer_controls, ARRAY_SIZE(mmul8_mixer_controls)),
 
+	SND_SOC_DAPM_MIXER("USB Mixer", SND_SOC_NOPM, 0, 0,
+			   usb_mixer_controls,
+			   ARRAY_SIZE(usb_mixer_controls)),
+
 };
 
 static const struct snd_soc_dapm_route intercon[] = {
@@ -1043,6 +1071,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"MM_UL6", NULL, "MultiMedia6 Mixer"},
 	{"MM_UL7", NULL, "MultiMedia7 Mixer"},
 	{"MM_UL8", NULL, "MultiMedia8 Mixer"},
+
+	Q6ROUTING_RX_DAPM_ROUTE("USB Mixer", "USB_RX"),
 };
 
 static int routing_hw_params(struct snd_soc_component *component,
