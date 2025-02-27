@@ -28,18 +28,20 @@ enum ipa_resource_type {
 enum ipa_rsrc_group_id {
 	/* Source resource group identifiers */
 	IPA_RSRC_GROUP_SRC_UL_DL			= 0,
+	IPA_RSRC_GROUP_SRC_UC_RX_Q,
 	IPA_RSRC_GROUP_SRC_COUNT,	/* Last in set; not a source group */
 
 	/* Destination resource group identifiers */
-	IPA_RSRC_GROUP_DST_UL_DL			= 0,
+	IPA_RSRC_GROUP_DST_UL_DL_DPL			= 0,
+	IPA_RSRC_GROUP_DST_UNUSED_1,
 	IPA_RSRC_GROUP_DST_COUNT,	/* Last; not a destination group */
 };
 
 /* QSB configuration data for an SoC having IPA v4.7 */
 static const struct ipa_qsb_data ipa_qsb_data[] = {
 	[IPA_QSB_MASTER_DDR] = {
-		.max_writes		= 12,
-		.max_reads		= 13,
+		.max_writes		= 8,
+		.max_reads		= 0,	/* no limit (hardware max) */
 		.max_reads_beats	= 120,
 	},
 };
@@ -79,7 +81,7 @@ static const struct ipa_gsi_endpoint_data ipa_gsi_endpoint_data[] = {
 		},
 		.endpoint = {
 			.config = {
-				.resource_group	= IPA_RSRC_GROUP_DST_UL_DL,
+				.resource_group	= IPA_RSRC_GROUP_DST_UL_DL_DPL,
 				.aggregation	= true,
 				.status_enable	= true,
 				.rx = {
@@ -104,7 +106,6 @@ static const struct ipa_gsi_endpoint_data ipa_gsi_endpoint_data[] = {
 			.filter_support	= true,
 			.config = {
 				.resource_group	= IPA_RSRC_GROUP_SRC_UL_DL,
-				.checksum       = true, // FIXME?
 				.qmap		= true,
 				.status_enable	= true,
 				.tx = {
@@ -127,8 +128,7 @@ static const struct ipa_gsi_endpoint_data ipa_gsi_endpoint_data[] = {
 		},
 		.endpoint = {
 			.config = {
-				.resource_group	= IPA_RSRC_GROUP_DST_UL_DL,
-				.checksum       = true, // FIXME?
+				.resource_group	= IPA_RSRC_GROUP_DST_UL_DL_DPL,
 				.qmap		= true,
 				.aggregation	= true,
 				.rx = {
@@ -197,12 +197,12 @@ static const struct ipa_resource ipa_resource_src[] = {
 /* Destination resource configuration data for an SoC having IPA v4.7 */
 static const struct ipa_resource ipa_resource_dst[] = {
 	[IPA_RESOURCE_TYPE_DST_DATA_SECTORS] = {
-		.limits[IPA_RSRC_GROUP_DST_UL_DL] = {
+		.limits[IPA_RSRC_GROUP_DST_UL_DL_DPL] = {
 			.min = 7,	.max = 7,
 		},
 	},
 	[IPA_RESOURCE_TYPE_DST_DPS_DMARS] = {
-		.limits[IPA_RSRC_GROUP_DST_UL_DL] = {
+		.limits[IPA_RSRC_GROUP_DST_UL_DL_DPL] = {
 			.min = 2,	.max = 2,
 		},
 	},
@@ -346,12 +346,12 @@ static const struct ipa_mem ipa_mem_local_data[] = {
 		.size		= 0x100c,
 		.canary_count	= 2,
 	},
-	//{
-	//	.id		= IPA_MEM_END_MARKER,
-	//	.offset		= 0x3000,
-	//	.size		= 0x0000,
-	//	.canary_count	= 1,
-	//},
+	{
+		.id		= IPA_MEM_END_MARKER,
+		.offset		= 0x3000,
+		.size		= 0x0000,
+		.canary_count	= 1,
+	},
 };
 
 /* Memory configuration data for an SoC having IPA v4.7 */
@@ -387,7 +387,7 @@ static const struct ipa_interconnect_data ipa_interconnect_data[] = {
 /* Clock and interconnect configuration data for an SoC having IPA v4.7 */
 static const struct ipa_power_data ipa_power_data = {
 	/* XXX Downstream code says 150 MHz (DT SVS2), 60 MHz (code) */
-	.core_clock_rate	= 60 * 1000 * 1000,	/* Hz (150?  60?) */
+	.core_clock_rate	= 100 * 1000 * 1000,	/* Hz (150?  60?) */
 	.interconnect_count	= ARRAY_SIZE(ipa_interconnect_data),
 	.interconnect_data	= ipa_interconnect_data,
 };
