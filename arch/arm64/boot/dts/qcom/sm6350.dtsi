@@ -1385,6 +1385,13 @@
 							compatible = "qcom,q6afe-clocks";
 							#clock-cells = <2>;
 						};
+
+						usbdai: usbd {
+							compatible = "qcom,q6usb";
+							#sound-dai-cells = <1>;
+							iommus = <&apps_smmu 0x100f 0x0>;
+							qcom,usb-audio-intr-idx = /bits/ 16 <2>;
+						};
 					};
 
 					q6asm: service@7 {
@@ -2016,10 +2023,11 @@
 				snps,has-lpm-erratum;
 				snps,hird-threshold = /bits/ 8 <0x10>;
 				snps,parkmode-disable-ss-quirk;
-				snps,dis-u1-entry-quirk;
-				snps,dis-u2-entry-quirk;
+				//snps,dis-u1-entry-quirk; // FIXME why removed on sm8350?
+				//snps,dis-u2-entry-quirk;
 				phys = <&usb_1_hsphy>, <&usb_1_qmpphy QMP_USB43DP_USB3_PHY>;
 				phy-names = "usb2-phy", "usb3-phy";
+				usb-soc-be = <&usbdai>;
 				usb-role-switch;
 
 				ports {
@@ -2977,6 +2985,9 @@
 			qcom,msa-fixed-perm;
 			status = "disabled";
 		};
+	};
+
+	sound: sound {
 	};
 
 	thermal-zones {
