@@ -27,14 +27,6 @@
 
 /* System Status */
 #define AW8695_SYSST				0x01
-#define AW8695_SYSST_BSTERRS			BIT(7)
-#define AW8695_SYSST_OVS			BIT(6)
-#define AW8695_SYSST_UVLS			BIT(5)
-#define AW8695_SYSST_FF_AES			BIT(4)
-#define AW8695_SYSST_FF_AFS			BIT(3)
-#define AW8695_SYSST_OCDS			BIT(2)
-#define AW8695_SYSST_OTS			BIT(1)
-#define AW8695_SYSST_DONES			BIT(0)
 
 /* System Interrupt */
 #define AW8695_SYSINT				0x02
@@ -52,19 +44,11 @@
 #define AW8695_SYSINTM_BSTERR_OFF		BIT(7)
 #define AW8695_SYSINTM_OV_OFF			BIT(6)
 #define AW8695_SYSINTM_UVLO_OFF			BIT(5)
-#define AW8695_SYSINTM_FF_AE_OFF		BIT(4)
-#define AW8695_SYSINTM_FF_AF_OFF		BIT(3)
 #define AW8695_SYSINTM_OCD_OFF			BIT(2)
 #define AW8695_SYSINTM_OT_OFF			BIT(1)
-#define AW8695_SYSINTM_DONE_OFF			BIT(0)
 
 /* System Control */
 #define AW8695_SYSCTRL				0x04
-#define AW8695_SYSCTRL_WAVDAT_MODE_MASK		GENMASK(7, 6)
-#define AW8695_SYSCTRL_WAVDAT_MODE_4X		(3<<6)
-#define AW8695_SYSCTRL_WAVDAT_MODE_2X		(0<<6)
-#define AW8695_SYSCTRL_WAVDAT_MODE_1X		(1<<6)
-
 #define AW8695_SYSCTRL_RAMINIT_EN		BIT(5)
 
 #define AW8695_SYSCTRL_PLAY_MODE_MASK		GENMASK(3, 2)
@@ -84,119 +68,21 @@
 #define AW8695_GO				0x05
 #define AW8695_GO_ENABLE			BIT(0)
 
-/* RTP Mode Data */
-#define AW8695_RTP_DATA				0x06
-
 /* Waveform #1 */
 #define AW8695_WAVSEQ1				0x07
-#define AW8695_WAVSEQ1_WAIT			BIT(7)
-#define AW8695_WAVSEQ1_WAV_FRM_SEQ1_MASK	GENMASK(6, 0)
 
 /* Waveform #2 */
 #define AW8695_WAVSEQ2				0x08
-#define AW8695_WAVSEQ2_WAIT			BIT(7)
-#define AW8695_WAVSEQ2_WAV_FRM_SEQ2_MASK	GENMASK(6, 0)
-
-/* Waveform #3 */
-#define AW8695_WAVSEQ3				0x09
-#define AW8695_WAVSEQ3_WAIT			BIT(7)
-#define AW8695_WAVSEQ3_WAV_FRM_SEQ3_MASK	GENMASK(6, 0)
-
-/* Waveform #4 */
-#define AW8695_WAVSEQ4				0x0a
-#define AW8695_WAVSEQ4_WAIT			BIT(7)
-#define AW8695_WAVSEQ4_WAV_FRM_SEQ4_MASK	GENMASK(6, 0)
-
-/* Waveform #5 */
-#define AW8695_WAVSEQ5				0x0b
-#define AW8695_WAVSEQ5_WAIT			BIT(7)
-#define AW8695_WAVSEQ5_WAV_FRM_SEQ5_MASK	GENMASK(6, 0)
-
-/* Waveform #6 */
-#define AW8695_WAVSEQ6				0x0c
-#define AW8695_WAVSEQ6_WAIT			BIT(7)
-#define AW8695_WAVSEQ6_WAV_FRM_SEQ6_MASK	GENMASK(6, 0)
-
-/* Waveform #7 */
-#define AW8695_WAVSEQ7				0x0d
-#define AW8695_WAVSEQ7_WAIT			BIT(7)
-#define AW8695_WAVSEQ7_WAV_FRM_SEQ7_MASK	GENMASK(6, 0)
-
-/* Waveform #8 */
-#define AW8695_WAVSEQ8				0x0e
-#define AW8695_WAVSEQ8_WAIT			BIT(7)
-#define AW8695_WAVSEQ8_WAV_FRM_SEQ8_MASK	GENMASK(6, 0)
 
 /* Waveform Loop #1 */
 #define AW8695_WAVLOOP1				0x0f
 #define AW8695_WAVLOOP1_SEQ1_MASK		GENMASK(7, 4)
 #define AW8695_WAVLOOP1_SEQ2_MASK		GENMASK(3, 0)
 
-/* Waveform Loop #2 */
-#define AW8695_WAVLOOP2				0x10
-#define AW8695_WAVLOOP2_SEQ3_MASK		GENMASK(7, 4)
-#define AW8695_WAVLOOP2_SEQ4_MASK		GENMASK(3, 0)
-
-/* Waveform Loop #3 */
-#define AW8695_WAVLOOP3				0x11
-#define AW8695_WAVLOOP3_SEQ5_MASK		GENMASK(7, 4)
-#define AW8695_WAVLOOP3_SEQ6_MASK		GENMASK(3, 0)
-
-/* Waveform Loop #4 */
-#define AW8695_WAVLOOP4				0x12
-#define AW8695_WAVLOOP4_SEQ7_MASK		GENMASK(7, 4)
-#define AW8695_WAVLOOP4_SEQ8_MASK		GENMASK(3, 0)
-
-/* Main Loop */
-#define AW8695_MAIN_LOOP			0x13
-
-/* TRIG1 Edge Waveform #1 */
-#define AW8695_TRG1_WAV_P			0x14
-
-/* TRIG2 Edge Waveform #1 */
-#define AW8695_TRG2_WAV_P			0x15
-
-/* TRIG3 Edge Waveform #1 */
-#define AW8695_TRG3_WAV_P			0x16
-
-/* TRIG1 Edge Waveform #2 */
-#define AW8695_TRG1_WAV_N			0x17
-
-/* TRIG2 Edge Waveform #2 */
-#define AW8695_TRG2_WAV_N			0x18
-
-/* TRIG3 Edge Waveform #2 */
-#define AW8695_TRG3_WAV_N			0x19
-
-#define AW8695_TRG_PRIO				0x1a
-#define AW8695_PLAYPRIO_GO_MASK			GENMASK(7, 6)
-#define AW8695_PLAYPRIO_TRIG3_MASK		GENMASK(5, 4)
-#define AW8695_PLAYPRIO_TRIG2_MASK		GENMASK(3, 2)
-#define AW8695_PLAYPRIO_TRIG1_MASK		GENMASK(1, 0)
-
-/* Trig Pins Config */
-#define AW8695_TRG_CFG1				0x1b
-#define AW8695_TRGCFG1_TRG3_POLAR_NEG		BIT(5)
-#define AW8695_TRGCFG1_TRG3_EDGE_POS		BIT(4)
-#define AW8695_TRGCFG1_TRG2_POLAR_NEG		BIT(3)
-#define AW8695_TRGCFG1_TRG2_EDGE_POS		BIT(2)
-#define AW8695_TRGCFG1_TRG1_POLAR_NEG		BIT(1)
-#define AW8695_TRGCFG1_TRG1_EDGE_POS		BIT(0)
-
-/* Trig Pins Config */
-#define AW8695_TRG_CFG2				0x1c
-#define AW8695_TRGCFG2_TRG3_ENABLE		BIT(2)
-#define AW8695_TRGCFG2_TRG2_ENABLE		BIT(1)
-#define AW8695_TRGCFG2_TRG1_ENABLE		BIT(0)
-
 /* Debug Control */
 #define AW8695_DBGCTRL				0x20
-#define AW8695_DBGCTRL_INT_EDGE_MODE_MASK	GENMASK(3, 3)
-#define AW8695_DBGCTRL_INT_EDGE_MODE_POS	(1<<3)
-#define AW8695_DBGCTRL_INT_EDGE_MODE_BOTH	(0<<3)
 #define AW8695_DBGCTRL_INT_MODE_MASK		GENMASK(2, 2)
 #define AW8695_DBGCTRL_INT_MODE_EDGE		(1<<2)
-#define AW8695_DBGCTRL_INT_MODE_LEVEL		(0<<2)
 
 /* High Five Bits of Wave SRAM */
 #define AW8695_BASE_ADDRH			0x21
@@ -204,43 +90,13 @@
 /* Low Eight Bits of Wave SRAM */
 #define AW8695_BASE_ADDRL			0x22
 
-/* High Four Bits of FIFO AE */
-#define AW8695_FIFO_AEH				0x23
-
-/* Low Eight Bits of FIFO AE */
-#define AW8695_FIFO_AEL				0x24
-
-/* High Four Bits of FIFO AF */
-#define AW8695_FIFO_AFH				0x25
-
-/* Low Eight Bits of FIFO AF */
-#define AW8695_FIFO_AFL				0x26
-
-#define AW8695_WAKE_DLY				0x27
-
-#define AW8695_START_DLY			0x28
-
-#define AW8695_END_DLY_H			0x29
-
-#define AW8695_END_DLY_L			0x2a
-
 /* Global Control Data */
 #define AW8695_DATCTRL				0x2b
 #define AW8695_DATCTRL_FC_MASK			GENMASK(6, 6)
 #define AW8695_DATCTRL_FC_1000HZ		(3<<6)
-#define AW8695_DATCTRL_FC_800HZ			(3<<6)
-#define AW8695_DATCTRL_FC_600HZ			(1<<6)
-#define AW8695_DATCTRL_FC_400HZ			(0<<6)
 
 #define AW8695_DATCTRL_LPF_ENABLE_MASK		GENMASK(5, 5)
 #define AW8695_DATCTRL_LPF_ENABLE		(1<<5)
-#define AW8695_DATCTRL_LPF_DISABLE		(0<<5)
-
-#define AW8695_DATCTRL_WAKEMODE_ENABLE_MASK	GENMASK(0, 0)
-#define AW8695_DATCTRL_WAKEMODE_ENABLE		(1<<0)
-#define AW8695_DATCTRL_WAKEMODE_DISABLE		(0<<0)
-
-#define AW8695_PWMDEL				0x2c
 
 /* PWM Output Protect Configuration */
 #define AW8695_PWMPRC				0x2d
@@ -249,15 +105,10 @@
 /* PWM Debug */
 #define AW8695_PWMDBG				0x2e
 #define AW8695_PWMDBG_PWM_MODE_MASK		GENMASK(6, 5)
-#define AW8695_PWMDBG_PWM_12K			(3<<5)
 #define AW8695_PWMDBG_PWM_24K			(2<<5)
-#define AW8695_PWMDBG_PWM_48K			(0<<5)
-
-#define AW8695_LDOCTRL				0x2f
 
 /* Debug Status */
 #define AW8695_DBGSTAT				0x30
-#define AW8695_DBGSTAT_FF_EMPTY			BIT(0)
 
 /* Boost Debug #1 */
 #define AW8695_BSTDBG1				0x31
@@ -271,56 +122,19 @@
 /* Boost Config */
 #define AW8695_BSTCFG				0x34
 #define AW8695_BSTCFG_PEAKCUR_MASK		GENMASK(2, 0)
-#define AW8695_BSTCFG_PEAKCUR_4A		(7<<0)
-#define AW8695_BSTCFG_PEAKCUR_3P75A		(6<<0)
-#define AW8695_BSTCFG_PEAKCUR_3P5A		(5<<0)
-#define AW8695_BSTCFG_PEAKCUR_3P25A		(4<<0)
-#define AW8695_BSTCFG_PEAKCUR_3A		(3<<0)
-#define AW8695_BSTCFG_PEAKCUR_2P5A		(2<<0)
 #define AW8695_BSTCFG_PEAKCUR_2A		(1<<0)
-#define AW8695_BSTCFG_PEAKCUR_1P5A		(0<<0)
 
 #define AW8695_ANADBG				0x35
 #define AW8695_ANADBG_IOC_MASK			GENMASK(3, 2)
 #define AW8695_ANADBG_IOC_4P65A			(3<<2)
-#define AW8695_ANADBG_IOC_4P15A			(2<<2)
-#define AW8695_ANADBG_IOC_3P65A			(1<<2)
-#define AW8695_ANADBG_IOC_3P15A			(0<<2)
 
 #define AW8695_ANACTRL				0x36
 #define AW8695_ANACTRL_LRA_SRC_MASK		GENMASK(5, 5)
 #define AW8695_ANACTRL_LRA_SRC_REG		(1<<5)
-#define AW8695_ANACTRL_LRA_SRC_EFUSE		(0<<5)
-#define AW8695_ANACTRL_HD_PD_MASK		GENMASK(3, 3)
-#define AW8695_ANACTRL_HD_PD_EN			(1<<3)
-#define AW8695_ANACTRL_HD_HZ_EN			(0<<3)
-
-#define AW8695_CPDBG				0x37
-
-#define AW8695_GLBDBG				0x38
-
-/* Data Gain */
-#define AW8695_DATDBG				0x39
-
-/* Boost Debug #4 */
-#define AW8695_BSTDBG4				0x3a
-#define AW8695_BSTDBG4_BSTVOL_MASK		GENMASK(5, 1)
-
-/* Boost Debug #5 */
-#define AW8695_BSTDBG5				0x3b
-
-/* Boost Debug #6 */
-#define AW8695_BSTDBG6				0x3c
-
-#define AW8695_HDRVDBG				0x3d
 
 /* Waveform Protect Level */
 #define AW8695_PRLVL				0x3e
 #define AW8695_PRLVL_PR_ENABLE			BIT(7)
-#define AW8695_PRLVL_PRLVL_MASK			GENMASK(6, 0)
-
-/* Waveform Protect Period */
-#define AW8695_PRTIME				0x3f
 
 /* SRAM Address 0xhigh */
 #define AW8695_RAMADDRH				0x40
@@ -335,28 +149,14 @@
 
 #define AW8695_BST_AUTO				0x47
 #define AW8695_BST_AUTO_BST_AUTOSW_MASK		GENMASK(2, 2)
-#define AW8695_BST_AUTO_BST_AUTOMATIC_BOOST	(1<<2)
 #define AW8695_BST_AUTO_BST_MANUAL_BOOST	(0<<2)
-#define AW8695_BST_AUTO_BST_RTP_ENABLE		BIT(1)
-#define AW8695_BST_AUTO_BST_RAM_ENABLE		BIT(0)
 
 /* CONT Mode Control */
 #define AW8695_CONT_CTRL			0x48
-#define AW8695_CONT_CTRL_ZC_DETEC_ENABLE	BIT(7)
-#define AW8695_CONT_CTRL_WAIT_PERIOD_MASK	GENMASK(6, 5)
-#define AW8695_CONT_CTRL_WAIT_8PERIOD		(3<<5)
-#define AW8695_CONT_CTRL_WAIT_4PERIOD		(2<<5)
-#define AW8695_CONT_CTRL_WAIT_2PERIOD		(1<<5)
-#define AW8695_CONT_CTRL_WAIT_1PERIOD		(0<<5)
-#define AW8695_CONT_CTRL_MODE_MASK		GENMASK(4, 4)
-#define AW8695_CONT_CTRL_BY_DRV_TIME		(1<<4)
-#define AW8695_CONT_CTRL_BY_GO_SIGNAL		(0<<4)
 #define AW8695_CONT_CTRL_EN_CLOSE_MASK		GENMASK(3, 3)
 #define AW8695_CONT_CTRL_CLOSE_PLAYBACK		(1<<3)
 #define AW8695_CONT_CTRL_OPEN_PLAYBACK		(0<<3)
 #define AW8695_CONT_CTRL_F0_DETECT_ENABLE	BIT(2)
-#define AW8695_CONT_CTRL_O2C_ENABLE		BIT(1)
-#define AW8695_CONT_CTRL_AUTO_BRK_ENABLE	BIT(0)
 
 /* High 8 Bits Pre Setting f0 Value */
 #define AW8695_F_PRE_H				0x49
@@ -364,89 +164,28 @@
 /* Low 8 Bits Pre Setting f0 Value */
 #define AW8695_F_PRE_L				0x4a
 
-/* High 4 Bits of Delay Time Setting */
-#define AW8695_TD_H				0x4b
-
-/* Low 8 Bits of Delay Time Setting */
-#define AW8695_TD_L				0x4c
-
 #define AW8695_TSET				0x4d
 
 #define AW8695_TRIM_LRA				0x5b
 
 #define AW8695_R_SPARE				0x5d
 
-#define AW8695_D2SCFG				0x5e
-#define AW8695_D2SCFG_CLK_ADC_MASK		GENMASK(7, 5)
-#define AW8695_D2SCFG_CLK_ASC_0P09375MHZ	(7<<5)
-#define AW8695_D2SCFG_CLK_ASC_0P1875MHZ		(6<<5)
-#define AW8695_D2SCFG_CLK_ASC_0P375MHZ		(5<<5)
-#define AW8695_D2SCFG_CLK_ASC_0P75MHZ		(4<<5)
-#define AW8695_D2SCFG_CLK_ASC_1P5MHZ		(3<<5)
-#define AW8695_D2SCFG_CLK_ASC_3MHZ		(2<<5)
-#define AW8695_D2SCFG_CLK_ASC_6MHZ		(1<<5)
-#define AW8695_D2SCFG_CLK_ASC_12MHZ		(0<<5)
-
 /* Detection Control */
 #define AW8695_DETCTRL				0x5f
-#define AW8695_DETCTRL_RL_OS_MASK		GENMASK(6, 6)
-#define AW8695_DETCTRL_RL_DETECT		(1<<6)
-#define AW8695_DETCTRL_OS_DETECT		(0<<6)
 #define AW8695_DETCTRL_PROTECT_MASK		GENMASK(5, 5)
 #define AW8695_DETCTRL_PROTECT_NO_ACTION	(1<<5)
-#define AW8695_DETCTRL_PROTECT_SHUTDOWN		(0<<5)
-#define AW8695_DETCTRL_ADO_SLOT_MODE_ENABLE	BIT(4)
-#define AW8695_DETCTRL_VBAT_GO_ENABLE		BIT(1)
 #define AW8695_DETCTRL_DIAG_GO_ENABLE		BIT(0)
-
-/* Detected RL of LRA */
-#define AW8695_RLDET				0x60
-
-/* Detected Offset of LRA */
-#define AW8695_OSDET				0x61
-
-/* Detected VBAT */
-#define AW8695_VBATDET				0x62
-
-#define AW8695_TESTDET				0x63
-
-#define AW8695_DETLO				0x64
-
-#define AW8695_BEMFDBG				0x65
 
 /* ADC Test */
 #define AW8695_ADCTEST				0x66
 #define AW8695_ADCTEST_VBAT_MODE_MASK		GENMASK(6, 6)
 #define AW8695_ADCTEST_VBAT_HW_COMP		(1<<6)
-#define AW8695_ADCTEST_VBAT_SW_COMP		(0<<6)
-
-#define AW8695_BEMFTEST				0x67
 
 /* High 8 Bits Detected f0 Value */
 #define AW8695_F_LRA_F0_H			0x68
 
 /* Low 8 Bits Detected f0 Value */
 #define AW8695_F_LRA_F0_L			0x69
-
-/* High 8 Bits CONT_ENG Gotten f0 Value */
-#define AW8695_F_LRA_CONT_H			0x6a
-
-/* Low 8 Bits CONT_ENG Gotten f0 Value */
-#define AW8695_F_LRA_CONT_L			0x6b
-
-#define AW8695_WAIT_VOL_MP			0x6d
-
-#define AW8695_WAIT_VOL_MN			0x6f
-
-#define AW8695_BEMF_VOL_H			0x70
-
-#define AW8695_BEMF_VOL_L			0x71
-
-/* Zero Cross Threshold High 8 Bits Configuration */
-#define AW8695_ZC_THRSH_H			0x72
-
-/* Zero Cross Threshold Low 8 Bits Configuration */
-#define AW8695_ZC_THRSH_L			0x73
 
 #define AW8695_BEMF_VTHH_H			0x74
 
@@ -456,21 +195,8 @@
 
 #define AW8695_BEMF_VTHL_L			0x77
 
-/* BEMF Detection Cycles Configuration */
-#define AW8695_BEMF_NUM				0x78
-#define AW8695_BEMF_NUM_BRK_MASK		GENMASK(3, 0)
-
-/* Drive Time Setting */
-#define AW8695_DRV_TIME				0x79
-
-/* Non Zero Cross Time Setting */
-#define AW8695_TIME_NZC				0x7a
-
 /* Drive Level Setting */
 #define AW8695_DRV_LVL				0x7b
-
-/* Drive Level for Overdrive Setting */
-#define AW8695_DRV_LVL_OV			0x7c
 
 /* Number Configuration for F0 Trace #1 */
 #define AW8695_NUM_F0_1				0x7d
@@ -488,8 +214,6 @@
 enum aw8695_work_mode {
 	AW8695_STANDBY_MODE,
 	AW8695_RAM_MODE,
-	AW8695_RTP_MODE,
-	AW8695_TRIG_MODE,
 	AW8695_CONT_MODE,
 };
 
