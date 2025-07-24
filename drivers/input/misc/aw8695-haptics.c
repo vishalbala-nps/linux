@@ -52,17 +52,16 @@
 #define AW8695_SYSCTRL_RAMINIT_EN		BIT(5)
 
 #define AW8695_SYSCTRL_PLAY_MODE_MASK		GENMASK(3, 2)
-#define AW8695_SYSCTRL_PLAY_MODE_CONT		(2<<2)
-#define AW8695_SYSCTRL_PLAY_MODE_RTP		(1<<2)
-#define AW8695_SYSCTRL_PLAY_MODE_RAM		(0<<2)
+#define AW8695_SYSCTRL_PLAY_MODE_CONT		(2)
+#define AW8695_SYSCTRL_PLAY_MODE_RAM		(0)
 
 #define AW8695_SYSCTRL_BST_MODE_MASK		GENMASK(1, 1)
-#define AW8695_SYSCTRL_BST_MODE_BOOST		(1<<1)
-#define AW8695_SYSCTRL_BST_MODE_BYPASS		(0<<1)
+#define AW8695_SYSCTRL_BST_MODE_BOOST		(1)
+#define AW8695_SYSCTRL_BST_MODE_BYPASS		(0)
 
 #define AW8695_SYSCTRL_WORK_MODE_MASK		GENMASK(0, 0)
-#define AW8695_SYSCTRL_STANDBY			(1<<0)
-#define AW8695_SYSCTRL_ACTIVE			(0<<0)
+#define AW8695_SYSCTRL_STANDBY			(1)
+#define AW8695_SYSCTRL_ACTIVE			(0)
 
 /* Process Control */
 #define AW8695_GO				0x05
@@ -82,7 +81,7 @@
 /* Debug Control */
 #define AW8695_DBGCTRL				0x20
 #define AW8695_DBGCTRL_INT_MODE_MASK		GENMASK(2, 2)
-#define AW8695_DBGCTRL_INT_MODE_EDGE		(1<<2)
+#define AW8695_DBGCTRL_INT_MODE_EDGE		(1)
 
 /* High Five Bits of Wave SRAM */
 #define AW8695_BASE_ADDRH			0x21
@@ -93,10 +92,10 @@
 /* Global Control Data */
 #define AW8695_DATCTRL				0x2b
 #define AW8695_DATCTRL_FC_MASK			GENMASK(6, 6)
-#define AW8695_DATCTRL_FC_1000HZ		(3<<6)
+#define AW8695_DATCTRL_FC_1000HZ		(3)
 
 #define AW8695_DATCTRL_LPF_ENABLE_MASK		GENMASK(5, 5)
-#define AW8695_DATCTRL_LPF_ENABLE		(1<<5)
+#define AW8695_DATCTRL_LPF_ENABLE		(1)
 
 /* PWM Output Protect Configuration */
 #define AW8695_PWMPRC				0x2d
@@ -105,7 +104,7 @@
 /* PWM Debug */
 #define AW8695_PWMDBG				0x2e
 #define AW8695_PWMDBG_PWM_MODE_MASK		GENMASK(6, 5)
-#define AW8695_PWMDBG_PWM_24K			(2<<5)
+#define AW8695_PWMDBG_PWM_24K			(2)
 
 /* Debug Status */
 #define AW8695_DBGSTAT				0x30
@@ -122,15 +121,15 @@
 /* Boost Config */
 #define AW8695_BSTCFG				0x34
 #define AW8695_BSTCFG_PEAKCUR_MASK		GENMASK(2, 0)
-#define AW8695_BSTCFG_PEAKCUR_2A		(1<<0)
+#define AW8695_BSTCFG_PEAKCUR_2A		(1)
 
 #define AW8695_ANADBG				0x35
 #define AW8695_ANADBG_IOC_MASK			GENMASK(3, 2)
-#define AW8695_ANADBG_IOC_4P65A			(3<<2)
+#define AW8695_ANADBG_IOC_4P65A			(3)
 
 #define AW8695_ANACTRL				0x36
 #define AW8695_ANACTRL_LRA_SRC_MASK		GENMASK(5, 5)
-#define AW8695_ANACTRL_LRA_SRC_REG		(1<<5)
+#define AW8695_ANACTRL_LRA_SRC_REG		(1)
 
 /* Waveform Protect Level */
 #define AW8695_PRLVL				0x3e
@@ -149,13 +148,13 @@
 
 #define AW8695_BST_AUTO				0x47
 #define AW8695_BST_AUTO_BST_AUTOSW_MASK		GENMASK(2, 2)
-#define AW8695_BST_AUTO_BST_MANUAL_BOOST	(0<<2)
+#define AW8695_BST_AUTO_BST_MANUAL_BOOST	(0)
 
 /* CONT Mode Control */
 #define AW8695_CONT_CTRL			0x48
 #define AW8695_CONT_CTRL_EN_CLOSE_MASK		GENMASK(3, 3)
-#define AW8695_CONT_CTRL_CLOSE_PLAYBACK		(1<<3)
-#define AW8695_CONT_CTRL_OPEN_PLAYBACK		(0<<3)
+#define AW8695_CONT_CTRL_CLOSE_PLAYBACK		(1)
+#define AW8695_CONT_CTRL_OPEN_PLAYBACK		(0)
 #define AW8695_CONT_CTRL_F0_DETECT_ENABLE	BIT(2)
 
 /* High 8 Bits Pre Setting f0 Value */
@@ -173,13 +172,13 @@
 /* Detection Control */
 #define AW8695_DETCTRL				0x5f
 #define AW8695_DETCTRL_PROTECT_MASK		GENMASK(5, 5)
-#define AW8695_DETCTRL_PROTECT_NO_ACTION	(1<<5)
+#define AW8695_DETCTRL_PROTECT_NO_ACTION	(1)
 #define AW8695_DETCTRL_DIAG_GO_ENABLE		BIT(0)
 
 /* ADC Test */
 #define AW8695_ADCTEST				0x66
 #define AW8695_ADCTEST_VBAT_MODE_MASK		GENMASK(6, 6)
-#define AW8695_ADCTEST_VBAT_HW_COMP		(1<<6)
+#define AW8695_ADCTEST_VBAT_HW_COMP		(1)
 
 /* High 8 Bits Detected f0 Value */
 #define AW8695_F_LRA_F0_H			0x68
@@ -300,7 +299,9 @@ static int aw8695_haptic_set_active(struct aw8695_data *haptics)
 	int err;
 
 	err = regmap_update_bits(haptics->regmap, AW8695_SYSCTRL,
-		AW8695_SYSCTRL_WORK_MODE_MASK, AW8695_SYSCTRL_ACTIVE);
+				 AW8695_SYSCTRL_WORK_MODE_MASK,
+				 FIELD_PREP(AW8695_SYSCTRL_WORK_MODE_MASK,
+					    AW8695_SYSCTRL_ACTIVE));
 	if (err)
 		return err;
 
@@ -309,7 +310,7 @@ static int aw8695_haptic_set_active(struct aw8695_data *haptics)
 		return err;
 
 	return regmap_update_bits(haptics->regmap, AW8695_SYSINTM,
-		AW8695_SYSINTM_UVLO_OFF, 0);
+				  AW8695_SYSINTM_UVLO_OFF, 0);
 }
 
 static int aw8695_set_work_mode(struct aw8695_data *haptics,
@@ -321,30 +322,45 @@ static int aw8695_set_work_mode(struct aw8695_data *haptics,
 	switch (mode) {
 	case AW8695_STANDBY_MODE:
 		err = regmap_update_bits(haptics->regmap, AW8695_SYSINTM,
-			AW8695_SYSINTM_UVLO_OFF, AW8695_SYSINTM_UVLO_OFF);
+					 AW8695_SYSINTM_UVLO_OFF, AW8695_SYSINTM_UVLO_OFF);
 		if (err)
 			return err;
+
 		return regmap_update_bits(haptics->regmap, AW8695_SYSCTRL,
-			AW8695_SYSCTRL_WORK_MODE_MASK, AW8695_SYSCTRL_STANDBY);
+					  AW8695_SYSCTRL_WORK_MODE_MASK,
+					  FIELD_PREP(AW8695_SYSCTRL_WORK_MODE_MASK,
+						     AW8695_SYSCTRL_STANDBY));
 	case AW8695_RAM_MODE:
 		err = regmap_update_bits(haptics->regmap, AW8695_SYSCTRL,
-			AW8695_SYSCTRL_PLAY_MODE_MASK, AW8695_SYSCTRL_PLAY_MODE_RAM);
+					 AW8695_SYSCTRL_PLAY_MODE_MASK,
+					 FIELD_PREP(AW8695_SYSCTRL_PLAY_MODE_MASK,
+						    AW8695_SYSCTRL_PLAY_MODE_RAM));
 		if (err)
 			return err;
+
 		err = regmap_update_bits(haptics->regmap, AW8695_SYSCTRL,
-			AW8695_SYSCTRL_BST_MODE_MASK, AW8695_SYSCTRL_BST_MODE_BYPASS);
+					 AW8695_SYSCTRL_BST_MODE_MASK,
+					 FIELD_PREP(AW8695_SYSCTRL_BST_MODE_MASK,
+						    AW8695_SYSCTRL_BST_MODE_BYPASS));
 		if (err)
 			return err;
+
 		return aw8695_haptic_set_active(haptics);
 	case AW8695_CONT_MODE:
 		err = regmap_update_bits(haptics->regmap, AW8695_SYSCTRL,
-			AW8695_SYSCTRL_PLAY_MODE_MASK, AW8695_SYSCTRL_PLAY_MODE_CONT);
+					 AW8695_SYSCTRL_PLAY_MODE_MASK,
+					 FIELD_PREP(AW8695_SYSCTRL_PLAY_MODE_MASK,
+						    AW8695_SYSCTRL_PLAY_MODE_CONT));
 		if (err)
 			return err;
+
 		err = regmap_update_bits(haptics->regmap, AW8695_SYSCTRL,
-			AW8695_SYSCTRL_BST_MODE_MASK, AW8695_SYSCTRL_BST_MODE_BYPASS);
+					 AW8695_SYSCTRL_BST_MODE_MASK,
+					 FIELD_PREP(AW8695_SYSCTRL_BST_MODE_MASK,
+						    AW8695_SYSCTRL_BST_MODE_BYPASS));
 		if (err)
 			return err;
+
 		return aw8695_haptic_set_active(haptics);
 	default:
 		dev_err(dev, "Unhandled mode: %d\n", mode);
@@ -377,7 +393,7 @@ static int aw8695_haptics_stop(struct aw8695_data *haptics)
 	struct device *dev = &haptics->client->dev;
 
 	err = regmap_update_bits(haptics->regmap, AW8695_GO,
-		AW8695_GO_ENABLE, 0);
+				 AW8695_GO_ENABLE, 0);
 	if (err)
 		return err;
 
@@ -407,7 +423,7 @@ static int aw8695_haptics_start(struct aw8695_data *haptics)
 		return err;
 
 	err = regmap_update_bits(haptics->regmap, AW8695_WAVLOOP1,
-		AW8695_WAVLOOP1_SEQ1_MASK, 0xf0);
+				 AW8695_WAVLOOP1_SEQ1_MASK, 0xf0);
 	if (err)
 		return err;
 
@@ -416,7 +432,7 @@ static int aw8695_haptics_start(struct aw8695_data *haptics)
 		return err;
 
 	err = regmap_update_bits(haptics->regmap, AW8695_WAVLOOP1,
-		AW8695_WAVLOOP1_SEQ2_MASK, 0x0);
+				 AW8695_WAVLOOP1_SEQ2_MASK, 0x0);
 	if (err)
 		return err;
 
@@ -427,7 +443,7 @@ static int aw8695_haptics_start(struct aw8695_data *haptics)
 
 	/* Start vibration */
 	return regmap_update_bits(haptics->regmap, AW8695_GO,
-		AW8695_GO_ENABLE, AW8695_GO_ENABLE);
+				  AW8695_GO_ENABLE, AW8695_GO_ENABLE);
 }
 
 static void aw8695_close(struct input_dev *input)
@@ -543,27 +559,36 @@ static int aw8695_haptic_get_f0(struct aw8695_data *haptics)
 		return err;
 
 	err = regmap_update_bits(haptics->regmap, AW8695_CONT_CTRL,
-		AW8695_CONT_CTRL_EN_CLOSE_MASK, AW8695_CONT_CTRL_OPEN_PLAYBACK);
+				 AW8695_CONT_CTRL_EN_CLOSE_MASK,
+				 FIELD_PREP(AW8695_CONT_CTRL_EN_CLOSE_MASK,
+					    AW8695_CONT_CTRL_OPEN_PLAYBACK));
 	if (err)
 		return err;
 	err = regmap_update_bits(haptics->regmap, AW8695_CONT_CTRL,
-		AW8695_CONT_CTRL_F0_DETECT_ENABLE, AW8695_CONT_CTRL_F0_DETECT_ENABLE);
+				 AW8695_CONT_CTRL_F0_DETECT_ENABLE,
+				 AW8695_CONT_CTRL_F0_DETECT_ENABLE);
 	if (err)
 		return err;
 
 	/* LPF */
 	err = regmap_update_bits(haptics->regmap, AW8695_DATCTRL,
-		AW8695_DATCTRL_FC_MASK, AW8695_DATCTRL_FC_1000HZ);
+				 AW8695_DATCTRL_FC_MASK,
+				 FIELD_PREP(AW8695_DATCTRL_FC_MASK,
+					    AW8695_DATCTRL_FC_1000HZ));
 	if (err)
 		return err;
 	err = regmap_update_bits(haptics->regmap, AW8695_DATCTRL,
-		AW8695_DATCTRL_LPF_ENABLE_MASK, AW8695_DATCTRL_LPF_ENABLE);
+				 AW8695_DATCTRL_LPF_ENABLE_MASK,
+				 FIELD_PREP(AW8695_DATCTRL_LPF_ENABLE_MASK,
+					    AW8695_DATCTRL_LPF_ENABLE));
 	if (err)
 		return err;
 
 	/* LRA OSC Source */
 	err = regmap_update_bits(haptics->regmap, AW8695_ANACTRL,
-		AW8695_ANACTRL_LRA_SRC_MASK, AW8695_ANACTRL_LRA_SRC_REG);
+				 AW8695_ANACTRL_LRA_SRC_MASK,
+				 FIELD_PREP(AW8695_ANACTRL_LRA_SRC_MASK,
+					    AW8695_ANACTRL_LRA_SRC_REG));
 	if (err)
 		return err;
 
@@ -739,8 +764,9 @@ static int aw8695_init(struct aw8695_data *haptics)
 
 	/* Set interrupt mode to edge */
 	err = regmap_update_bits(haptics->regmap, AW8695_DBGCTRL,
-		AW8695_DBGCTRL_INT_MODE_MASK,
-		AW8695_DBGCTRL_INT_MODE_EDGE);
+				 AW8695_DBGCTRL_INT_MODE_MASK,
+				 FIELD_PREP(AW8695_DBGCTRL_INT_MODE_MASK,
+					    AW8695_DBGCTRL_INT_MODE_EDGE));
 	if (err) {
 		dev_err(dev, "Failed to set interrupt mode: %d\n", err);
 		return err;
@@ -773,7 +799,9 @@ static int aw8695_init(struct aw8695_data *haptics)
 		return err;
 
 	err = regmap_update_bits(haptics->regmap, AW8695_PWMDBG,
-		AW8695_PWMDBG_PWM_MODE_MASK, AW8695_PWMDBG_PWM_24K);
+				 AW8695_PWMDBG_PWM_MODE_MASK,
+				 FIELD_PREP(AW8695_PWMDBG_PWM_MODE_MASK,
+					    AW8695_PWMDBG_PWM_24K));
 	if (err)
 		return err;
 
@@ -794,19 +822,25 @@ static int aw8695_init(struct aw8695_data *haptics)
 		return err;
 
 	err = regmap_update_bits(haptics->regmap, AW8695_ANADBG,
-		AW8695_ANADBG_IOC_MASK, AW8695_ANADBG_IOC_4P65A);
+				 AW8695_ANADBG_IOC_MASK,
+				 FIELD_PREP(AW8695_ANADBG_IOC_MASK,
+					    AW8695_ANADBG_IOC_4P65A));
 	if (err)
 		return err;
 
 	/* Set boost peak current */
 	err = regmap_update_bits(haptics->regmap, AW8695_BSTCFG,
-		AW8695_BSTCFG_PEAKCUR_MASK, AW8695_BSTCFG_PEAKCUR_2A);
+				 AW8695_BSTCFG_PEAKCUR_MASK,
+				 FIELD_PREP(AW8695_BSTCFG_PEAKCUR_MASK,
+					    AW8695_BSTCFG_PEAKCUR_2A));
 	if (err)
 		return err;
 
 	/* Adjust motorprotect config */
 	err = regmap_update_bits(haptics->regmap, AW8695_DETCTRL,
-		AW8695_DETCTRL_PROTECT_MASK, AW8695_DETCTRL_PROTECT_NO_ACTION);
+				 AW8695_DETCTRL_PROTECT_MASK,
+				 FIELD_PREP(AW8695_DETCTRL_PROTECT_MASK,
+					    AW8695_DETCTRL_PROTECT_NO_ACTION);
 	if (err)
 		return err;
 	err = regmap_update_bits(haptics->regmap, AW8695_PWMPRC,
@@ -820,8 +854,9 @@ static int aw8695_init(struct aw8695_data *haptics)
 
 	/* Adjust auto boost config */
 	err = regmap_update_bits(haptics->regmap, AW8695_BST_AUTO,
-		AW8695_BST_AUTO_BST_AUTOSW_MASK,
-		AW8695_BST_AUTO_BST_MANUAL_BOOST);
+				 AW8695_BST_AUTO_BST_AUTOSW_MASK,
+				 FIELD_PREP(AW8695_BST_AUTO_BST_AUTOSW_MASK,
+					    AW8695_BST_AUTO_BST_MANUAL_BOOST));
 	if (err)
 		return err;
 
@@ -831,7 +866,9 @@ static int aw8695_init(struct aw8695_data *haptics)
 
 	/* Set vbat compensation mode */
 	err = regmap_update_bits(haptics->regmap, AW8695_ADCTEST,
-		AW8695_ADCTEST_VBAT_MODE_MASK, AW8695_ADCTEST_VBAT_HW_COMP);
+				 AW8695_ADCTEST_VBAT_MODE_MASK,
+				 FIELD_PREP(AW8695_ADCTEST_VBAT_MODE_MASK,
+					    AW8695_ADCTEST_VBAT_HW_COMP));
 	if (err)
 		return err;
 
