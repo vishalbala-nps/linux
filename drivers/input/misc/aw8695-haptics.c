@@ -419,26 +419,22 @@ static int aw8695_haptics_start(struct aw8695_data *haptics)
 	if (err)
 		return err;
 
-	/* Configure for waveform #1 to be played infinitely */
+	/*
+	 * Configure for waveform #1 to be played infinitely,
+	 * and waveform #2 to not be played.
+	 */
 	err = regmap_write(haptics->regmap, AW8695_WAVSEQ1, 0x1);
 	if (err)
 		return err;
 
-	err = regmap_update_bits(haptics->regmap, AW8695_WAVLOOP1,
-				 AW8695_WAVLOOP1_SEQ1_MASK,
-				 FIELD_PREP(AW8695_WAVLOOP1_SEQ1_MASK,
-					    AW8695_WAVLOOP_INFINITE));
-	if (err)
-		return err;
-
-	/* Configure for waveform #2 to not be played */
 	err = regmap_write(haptics->regmap, AW8695_WAVSEQ2, 0x0);
 	if (err)
 		return err;
 
-	err = regmap_update_bits(haptics->regmap, AW8695_WAVLOOP1,
-				 AW8695_WAVLOOP1_SEQ2_MASK,
-				 FIELD_PREP(AW8695_WAVLOOP1_SEQ2_MASK, 0x0));
+	err = regmap_write(haptics->regmap, AW8695_WAVLOOP1,
+			   FIELD_PREP(AW8695_WAVLOOP1_SEQ1_MASK,
+				      AW8695_WAVLOOP_INFINITE) |
+			   FIELD_PREP(AW8695_WAVLOOP1_SEQ2_MASK, 0));
 	if (err)
 		return err;
 
@@ -582,14 +578,9 @@ static int aw8695_haptic_get_f0(struct aw8695_data *haptics)
 
 	/* LPF */
 	err = regmap_update_bits(haptics->regmap, AW8695_DATCTRL,
-				 AW8695_DATCTRL_FC_MASK,
+				 AW8695_DATCTRL_FC_MASK | AW8695_DATCTRL_LPF_ENABLE_MASK,
 				 FIELD_PREP(AW8695_DATCTRL_FC_MASK,
-					    AW8695_DATCTRL_FC_1000HZ));
-	if (err)
-		return err;
-
-	err = regmap_update_bits(haptics->regmap, AW8695_DATCTRL,
-				 AW8695_DATCTRL_LPF_ENABLE_MASK,
+					    AW8695_DATCTRL_FC_1000HZ) |
 				 FIELD_PREP(AW8695_DATCTRL_LPF_ENABLE_MASK,
 					    AW8695_DATCTRL_LPF_ENABLE));
 	if (err)
@@ -661,12 +652,8 @@ static int aw8695_haptic_get_f0(struct aw8695_data *haptics)
 
 	/* restore default config */
 	err = regmap_update_bits(haptics->regmap, AW8695_CONT_CTRL,
-				 AW8695_CONT_CTRL_EN_CLOSE_MASK,
+				 AW8695_CONT_CTRL_EN_CLOSE_MASK | AW8695_CONT_CTRL_F0_DETECT_ENABLE,
 				 AW8695_CONT_CTRL_CLOSE_PLAYBACK);
-	if (err)
-		return err;
-	err = regmap_update_bits(haptics->regmap, AW8695_CONT_CTRL,
-				 AW8695_CONT_CTRL_F0_DETECT_ENABLE, 0);
 	if (err)
 		return err;
 
@@ -788,24 +775,10 @@ static int aw8695_init(struct aw8695_data *haptics)
 
 	/* Configure interrupts */
 	err = regmap_update_bits(haptics->regmap, AW8695_SYSINTM,
-				 AW8695_SYSINTM_BSTERR_OFF,
+				 AW8695_SYSINTM_BSTERR_OFF | AW8695_SYSINTM_OV_OFF |
+				 AW8695_SYSINTM_UVLO_OFF | AW8695_SYSINTM_OCD_OFF |
+				 AW8695_SYSINTM_OT_OFF,
 				 AW8695_SYSINTM_BSTERR_OFF);
-	if (err)
-		return err;
-	err = regmap_update_bits(haptics->regmap, AW8695_SYSINTM,
-				 AW8695_SYSINTM_OV_OFF, 0);
-	if (err)
-		return err;
-	err = regmap_update_bits(haptics->regmap, AW8695_SYSINTM,
-				 AW8695_SYSINTM_UVLO_OFF, 0);
-	if (err)
-		return err;
-	err = regmap_update_bits(haptics->regmap, AW8695_SYSINTM,
-				 AW8695_SYSINTM_OCD_OFF, 0);
-	if (err)
-		return err;
-	err = regmap_update_bits(haptics->regmap, AW8695_SYSINTM,
-				 AW8695_SYSINTM_OT_OFF, 0);
 	if (err)
 		return err;
 
