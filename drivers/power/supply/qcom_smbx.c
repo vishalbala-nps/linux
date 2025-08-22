@@ -199,6 +199,7 @@ enum smb_generation {
 
 /* pmi8998 registers represent current in increments of 1/40th of an amp */
 #define CURRENT_SCALE_FACTOR				25000
+#define SMB5_CURRENT_SCALE_FACTOR			100000 /* this should be 1/10th of an amp? */
 /* clang-format on */
 
 enum charger_status {
