@@ -1525,6 +1525,9 @@
 			iommus = <&adreno_smmu 0>;
 			operating-points-v2 = <&gpu_opp_table>;
 			qcom,gmu = <&gmu>;
+			interconnects = <&gem_noc MASTER_GRAPHICS_3D QCOM_ICC_TAG_ALWAYS
+					 &clk_virt SLAVE_EBI_CH0 QCOM_ICC_TAG_ALWAYS>;
+			interconnect-names = "gfx-mem";
 			nvmem-cells = <&gpu_speed_bin>;
 			nvmem-cell-names = "speed_bin";
 			#cooling-cells = <2>;
@@ -1686,6 +1689,9 @@
 					<&rpmhpd SM6350_MSS>;
 			power-domain-names = "cx", "mss";
 
+			interconnects = <&clk_virt MASTER_LLCC QCOM_ICC_TAG_ALWAYS
+					 &clk_virt SLAVE_EBI_CH0 QCOM_ICC_TAG_ALWAYS>;
+
 			memory-region = <&pil_modem_mem>;
 
 			qcom,qmp = <&aoss_qmp>;
@@ -1724,6 +1730,9 @@
 			power-domains = <&rpmhpd SM6350_CX>,
 					<&rpmhpd SM6350_MX>;
 			power-domain-names = "cx", "mx";
+
+			interconnects = <&compute_noc MASTER_NPU QCOM_ICC_TAG_ALWAYS
+					 &compute_noc SLAVE_CDSP_GEM_NOC QCOM_ICC_TAG_ALWAYS>;
 
 			memory-region = <&pil_cdsp_mem>;
 
