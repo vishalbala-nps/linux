@@ -440,7 +440,7 @@ static int imx582_update_controls(struct imx582 *imx582,
 static int imx582_update_exp_gain(struct imx582 *imx582, u32 exposure, u32 gain)
 {
 	u32 lpfr;
-	int ret;
+	int ret = 0;
 
 	lpfr = imx582->vblank + imx582->cur_mode->height;
 
