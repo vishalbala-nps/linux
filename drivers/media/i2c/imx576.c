@@ -498,7 +498,7 @@ static int imx576_update_controls(struct imx576 *imx576,
 static int imx576_update_exp_gain(struct imx576 *imx576, u32 exposure, u32 gain)
 {
 	u32 lpfr;
-	int ret;
+	int ret = 0;
 
 	lpfr = imx576->vblank + imx576->cur_mode->height;
 
