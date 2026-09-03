@@ -545,14 +545,14 @@
 };
 
 &mpss {
-	firmware-name = "qcom/sm7225/samsung/gts7xllite/modem.mdt";
+	firmware-name = "qcom/sm7225/samsung-gts7xllite/modem.mdt";
 	status = "okay";
 };
 
 &ipa {
 	qcom,gsi-loader = "self";
 	memory-region = <&pil_ipa_fw_mem>;
-	firmware-name = "qcom/sm7225/samsung/gts7xllite/ipa_fws.mbn";
+	firmware-name = "qcom/sm7225/samsung-gts7xllite/lagoon_ipa_fws.mdt";
 	status = "okay";
 };
 
