@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright (c) 2021, Luca Weiss <luca@z3ntu.xyz>
+ * Copyright (c) 2026, Vishal Balasubramanian <vishal.bala.nps@gmail.com>
  */
 
 /dts-v1/;
@@ -9,19 +9,11 @@
 #define PM7250B_SID 2
 #define PM7250B_SID1 3
 
-/* PMK8350 (in reality a PMK8003) is configured to use SID6 instead of 0 */
-#define PMK8350_SID 6
-
 #include <dt-bindings/firmware/qcom,scm.h>
 #include <dt-bindings/gpio/gpio.h>
-#include <dt-bindings/iio/qcom,spmi-adc7-pmk8350.h>
 #include <dt-bindings/input/input.h>
-#include <dt-bindings/leds/common.h>
-#include <dt-bindings/media/video-interfaces.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
-#include <dt-bindings/sound/qcom,q6asm.h>
-#include <dt-bindings/usb/pd.h>
 #include "sm7225.dtsi"
 #include "pm6150l.dtsi"
 #include "pm6350.dtsi"
@@ -31,9 +23,8 @@
 / {
 	model = "Samsung Galaxy Tab S7 FE LTE";
 	compatible = "samsung,gts7xllite", "qcom,sm7225";
-	chassis-type = "handset";
+	chassis-type = "tablet";
 
-	/* required for bootloader to select correct board */
 	qcom,msm-id = <0x1b2 0x10000 0x1cb 0x10000>;
 	qcom,board-id = <0x08 0x05>;
 
@@ -72,11 +63,6 @@
 	};
 
 	reserved-memory {
-		/*
-		 * The rmtfs memory region in downstream is 'dynamically allocated'
-		 * but given the same address every time. Hard code it as this address is
-		 * where the modem firmware expects it to be.
-		 */
 		framebuffer_mem: memory@a0000000 {
 			reg = <0 0xa0000000 0 (2560 * 1600 * 4)>;
 			no-map;
@@ -88,14 +74,6 @@
 
 			qcom,client-id = <1>;
 			qcom,vmid = <QCOM_SCM_VMID_MSS_MSA>;
-		};
-		ramoops@B1B00000 {
-			compatible = "ramoops";
-			reg = <0x00 0xb1b00000 0x00 0x100000>;
-			record-size = <0x40000>;
-			console-size = <0x40000>;
-			ftrace-size = <0x40000>;
-			pmsg-size = <0x40000>;
 		};
 	};
 };
@@ -362,23 +340,57 @@
 	status = "disabled";
 };
 
-&usb_1 {
-	qcom,select-utmi-as-pipe-clk;
+&ipa {
+	qcom,gsi-loader = "self";
+	memory-region = <&pil_ipa_fw_mem>;
+	firmware-name = "qcom/sm7225/samsung-gts7xllite/lagoon_ipa_fws.mbn";
 	status = "okay";
 };
 
-&usb_1_dwc3 {
-	dr_mode = "peripheral";
-	maximum-speed = "high-speed";
-	phys = <&usb_1_hsphy>;
-	phy-names = "usb2-phy";
+&mpss {
+	firmware-name = "qcom/sm7225/samsung-gts7xllite/modem.mbn";
+	status = "okay";
 };
 
-&usb_1_hsphy {
-	vdd-supply = <&vreg_l18a>;
-	vdda-pll-supply = <&vreg_l2a>;
-	vdda-phy-dpdm-supply = <&vreg_l3a>;
+&pm6350_gpios {
+	gpio_keys_pin: gpio-keys-state {
+		pins = "gpio2";
+		function = PMIC_GPIO_FUNC_NORMAL;
+		bias-pull-up;
+		input-enable;
+		power-source = <0>;
+	};
+};
+
+&pm6350_resin {
+	linux,code = <KEY_VOLUMEDOWN>;
 	status = "okay";
+};
+
+&pmk8350_rtc { 
+	status = "okay"; 
+};
+
+&qup_uart1_cts {
+	/delete-property/ bias-disable;
+	bias-bus-hold;
+};
+
+&qup_uart1_rts {
+	drive-strength = <2>;
+	/delete-property/ bias-pull-down;
+	bias-disable;
+};
+
+&qup_uart1_rx {
+	/delete-property/ bias-disable;
+	bias-pull-up;
+};
+
+&qup_uart1_tx {
+	drive-strength = <2>;
+	/delete-property/ bias-pull-up;
+	bias-disable;
 };
 
 &qupv3_id_0 {
@@ -389,87 +401,37 @@
 	status = "okay";
 };
 
-&qup_uart1_cts {
-	/*
-	 * Configure a bias-bus-hold on CTS to lower power
-	 * usage when Bluetooth is turned off. Bus hold will
-	 * maintain a low power state regardless of whether
-	 * the Bluetooth module drives the pin in either
-	 * direction or leaves the pin fully unpowered.
-	 */
-	/delete-property/ bias-disable;
-	bias-bus-hold;
-};
+&sdhc_2 {
+	vmmc-supply = <&vreg_l9e>;
+	vqmmc-supply = <&vreg_l6e>;
 
-&qup_uart1_rts {
-	/* We'll drive RTS, so no pull */
-	drive-strength = <2>;
-	/delete-property/ bias-pull-down;
-	bias-disable;
-};
+	cd-gpios = <&tlmm 94 GPIO_ACTIVE_LOW>;
 
-&qup_uart1_rx {
-	/*
-	 * Configure a pull-up on RX. This is needed to avoid
-	 * garbage data when the TX pin of the Bluetooth module is
-	 * in tri-state (module powered off or not driving the
-	 * signal yet).
-	 */
-	/delete-property/ bias-disable;
-	bias-pull-up;
-};
-
-&qup_uart1_tx {
-	/* We'll drive TX, so no pull */
-	drive-strength = <2>;
-	/delete-property/ bias-pull-up;
-	bias-disable;
+	status = "okay";
 };
 
 &tlmm {
 	qup_uart1_sleep_cts: qup-uart1-sleep-cts-state {
 		pins = "gpio61";
 		function = "gpio";
-		/*
-		 * Configure a bias-bus-hold on CTS to lower power
-		 * usage when Bluetooth is turned off. Bus hold will
-		 * maintain a low power state regardless of whether
-		 * the Bluetooth module drives the pin in either
-		 * direction or leaves the pin fully unpowered.
-		 */
 		bias-bus-hold;
 	};
 
 	qup_uart1_sleep_rts: qup-uart1-sleep-rts-state {
 		pins = "gpio62";
 		function = "gpio";
-		/*
-		 * Configure pull-down on RTS. As RTS is active low
-		 * signal, pull it low to indicate the BT SoC that it
-		 * can wakeup the system anytime from suspend state by
-		 * pulling RX low (by sending wakeup bytes).
-		 */
 		bias-pull-down;
 	};
 
 	qup_uart1_sleep_rx: qup-uart1-sleep-rx-state {
 		pins = "gpio64";
 		function = "gpio";
-		/*
-		 * Configure a pull-up on RX. This is needed to avoid
-		 * garbage data when the TX pin of the Bluetooth module
-		 * is floating which may cause spurious wakeups.
-		 */
 		bias-pull-up;
 	};
 
 	qup_uart1_sleep_tx: qup-uart1-sleep-tx-state {
 		pins = "gpio63";
 		function = "gpio";
-		/*
-		 * Configure pull-up on TX when it isn't actively driven
-		 * to prevent BT SoC from receiving garbage during sleep.
-		 */
 		bias-pull-up;
 	};
 };
@@ -498,6 +460,10 @@
 	};
 };
 
+&uart9 { 
+	status = "okay"; 
+};
+
 &ufs_mem_hc {
 	vcc-supply = <&vreg_l7e>;
 	vcc-max-microamp = <800000>;
@@ -512,47 +478,22 @@
 	status = "okay";
 };
 
-&sdhc_2 {
-	vmmc-supply = <&vreg_l9e>;
-	vqmmc-supply = <&vreg_l6e>;
-
-	cd-gpios = <&tlmm 94 GPIO_ACTIVE_LOW>;
-
+&usb_1 {
+	qcom,select-utmi-as-pipe-clk;
 	status = "okay";
 };
 
-&pmk8350_rtc { 
-	status = "okay"; 
+&usb_1_dwc3 {
+	dr_mode = "peripheral";
+	maximum-speed = "high-speed";
+	phys = <&usb_1_hsphy>;
+	phy-names = "usb2-phy";
 };
 
-&pm6350_gpios {
-	gpio_keys_pin: gpio-keys-state {
-		pins = "gpio2";
-		function = PMIC_GPIO_FUNC_NORMAL;
-		bias-pull-up;
-		input-enable;
-		power-source = <0>;
-	};
-};
-
-&pm6350_resin {
-	linux,code = <KEY_VOLUMEDOWN>;
-	status = "okay";
-};
-
-&uart9 { 
-	status = "okay"; 
-};
-
-&mpss {
-	firmware-name = "qcom/sm7225/samsung-gts7xllite/modem.mdt";
-	status = "okay";
-};
-
-&ipa {
-	qcom,gsi-loader = "self";
-	memory-region = <&pil_ipa_fw_mem>;
-	firmware-name = "qcom/sm7225/samsung-gts7xllite/lagoon_ipa_fws.mdt";
+&usb_1_hsphy {
+	vdd-supply = <&vreg_l18a>;
+	vdda-pll-supply = <&vreg_l2a>;
+	vdda-phy-dpdm-supply = <&vreg_l3a>;
 	status = "okay";
 };
 
