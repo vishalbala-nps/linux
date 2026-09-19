@@ -18,7 +18,6 @@
 #include "sm7225.dtsi"
 #include "pm6150l.dtsi"
 #include "pm6350.dtsi"
-#include "pm7250b.dtsi"
 #include "pmk8350.dtsi"
 
 /delete-node/ &pil_adsp_mem;
@@ -513,7 +512,6 @@
 		vddrf-supply = <&vreg_l2e>;
 		vddch0-supply = <&vreg_l10e>;
 
-		swctrl-gpios = <&tlmm 69 GPIO_ACTIVE_HIGH>;
 		max-speed = <3200000>;
 	};
 };
