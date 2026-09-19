@@ -75,6 +75,7 @@
 			reg = <0 0xa0000000 0 (2560 * 1600 * 4)>;
 			no-map;
 		};
+
 		memory@efe01000 {
 			compatible = "qcom,rmtfs-mem";
 			reg = <0 0xefe01000 0 0x600000>;
@@ -83,19 +84,22 @@
 			qcom,client-id = <1>;
 			qcom,vmid = <QCOM_SCM_VMID_MSS_MSA>;
 		};
-		// ADSP firmware needs 64mb in gts7xllite. So overriding
+
 		pil_adsp_mem: memory@84800000 {
 			reg = <0x0 0x84800000 0x0 0x4000000>;
 			no-map;
 		};
+
 		pil_camera_mem: memory@88800000 {
 			reg = <0x0 0x88800000 0x0 0x500000>;
 			no-map;
 		};
+
 		pil_cdsp_mem: memory@89700000 {
 			reg = <0x0 0x89700000 0x0 0x1e00000>;
 			no-map;
 		};
+
 		pil_npu_mem: memory@88d00000 {
 			reg = <0x0 0x88d00000 0x0 0x500000>;
 			no-map;
@@ -105,6 +109,7 @@
 			reg = <0x0 0x89200000 0x0 0x500000>;
 			no-map;
 		};
+
 		ramoops@b1b00000 {
 			compatible = "ramoops";
 			reg = <0x0 0xb1b00000 0x0 0x100000>;
@@ -117,7 +122,8 @@
 };
 
 &adsp {
-	firmware-name = "qcom/sm7225/samsung-gts7xllite/adsp.mbn";
+	firmware-name = "qcom/sm7225/Samsung/gts7xllite/adsp.mbn";
+
 	status = "okay";
 };
 
@@ -376,7 +382,8 @@
 };
 
 &cdsp {
-	firmware-name = "qcom/sm7225/samsung-gts7xllite/cdsp.mbn";
+	firmware-name = "qcom/sm7225/Samsung/gts7xllite/cdsp.mbn";
+
 	status = "okay";
 };
 
@@ -391,12 +398,14 @@
 &ipa {
 	qcom,gsi-loader = "self";
 	memory-region = <&pil_ipa_fw_mem>;
-	firmware-name = "qcom/sm7225/samsung-gts7xllite/lagoon_ipa_fws.mbn";
+	firmware-name = "qcom/sm7225/Samsung/gts7xllite/lagoon_ipa_fws.mbn";
+
 	status = "okay";
 };
 
 &mpss {
-	firmware-name = "qcom/sm7225/samsung-gts7xllite/modem.mbn";
+	firmware-name = "qcom/sm7225/Samsung/gts7xllite/modem.mbn";
+
 	status = "okay";
 };
 
@@ -412,6 +421,7 @@
 
 &pm6350_resin {
 	linux,code = <KEY_VOLUMEDOWN>;
+
 	status = "okay";
 };
 
@@ -517,17 +527,20 @@
 	vcc-max-microamp = <800000>;
 	vccq2-supply = <&vreg_l12a>;
 	vccq2-max-microamp = <800000>;
+
 	status = "okay";
 };
 
 &ufs_mem_phy {
 	vdda-phy-supply = <&vreg_l18a>;
 	vdda-pll-supply = <&vreg_l22a>;
+
 	status = "okay";
 };
 
 &usb_1 {
 	qcom,select-utmi-as-pipe-clk;
+
 	status = "okay";
 };
 
@@ -542,6 +555,7 @@
 	vdd-supply = <&vreg_l18a>;
 	vdda-pll-supply = <&vreg_l2a>;
 	vdda-phy-dpdm-supply = <&vreg_l3a>;
+	
 	status = "okay";
 };
 
