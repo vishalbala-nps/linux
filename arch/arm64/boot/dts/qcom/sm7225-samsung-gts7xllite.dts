@@ -481,14 +481,14 @@
 		bias-pull-down;
 	};
 
-	qup_uart1_sleep_rx: qup-uart1-sleep-rx-state {
-		pins = "gpio64";
+	qup_uart1_sleep_tx: qup-uart1-sleep-tx-state {
+		pins = "gpio63";
 		function = "gpio";
 		bias-pull-up;
 	};
 
-	qup_uart1_sleep_tx: qup-uart1-sleep-tx-state {
-		pins = "gpio63";
+	qup_uart1_sleep_rx: qup-uart1-sleep-rx-state {
+		pins = "gpio64";
 		function = "gpio";
 		bias-pull-up;
 	};
@@ -555,7 +555,7 @@
 	vdd-supply = <&vreg_l18a>;
 	vdda-pll-supply = <&vreg_l2a>;
 	vdda-phy-dpdm-supply = <&vreg_l3a>;
-	
+
 	status = "okay";
 };
 
