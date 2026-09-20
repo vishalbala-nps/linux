@@ -646,10 +646,10 @@
 };
 
 &usb_1_dwc3 {
+	maximum-speed = "super-speed";
 	dr_mode = "otg";
-	maximum-speed = "high-speed";
-	phys = <&usb_1_hsphy>;
-	phy-names = "usb2-phy";
+	phys = <&usb_1_hsphy>, <&usb_1_qmpphy QMP_USB43DP_USB3_PHY>;
+	phy-names = "usb2-phy", "usb3-phy";
 };
 
 &usb_1_hsphy {
