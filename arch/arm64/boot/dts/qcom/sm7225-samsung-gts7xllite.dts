@@ -138,6 +138,9 @@
 
 		wacom,irq-gpio = <&tlmm 85 GPIO_ACTIVE_LOW>;
 		wacom,fwe-gpio = <&tlmm 86 GPIO_ACTIVE_HIGH>;
+
+		wacom,swapped-x-y;
+		wacom,inverted-x;
 	};
 };
 
@@ -513,7 +516,7 @@
 		function = "gpio";
 		bias-pull-up;
 	};
-	
+
 	wacom_irq_default: wacom-irq-state {
 		pins = "gpio85";
 		function = "gpio";
@@ -570,10 +573,10 @@
 };
 
 &usb_1_dwc3 {
-	maximum-speed = "super-speed";
 	dr_mode = "otg";
-	phys = <&usb_1_hsphy>, <&usb_1_qmpphy QMP_USB43DP_USB3_PHY>;
-	phy-names = "usb2-phy", "usb3-phy";
+	maximum-speed = "high-speed";
+	phys = <&usb_1_hsphy>;
+	phy-names = "usb2-phy";
 };
 
 &usb_1_hsphy {

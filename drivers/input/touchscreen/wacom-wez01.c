@@ -81,9 +81,6 @@
  * invert for a mirror, set xy_switch for a 90-degree rotation. Confirm with a
  * three-corner raw capture (evtest) rather than guessing.
  */
-#define WACOM_X_INVERT		0
-#define WACOM_Y_INVERT		0
-#define WACOM_XY_SWITCH		0
 
 struct wacom_wez01 {
 	struct i2c_client *client;
@@ -97,6 +94,9 @@ struct wacom_wez01 {
 	s8 max_tilt;
 
 	bool prox;	/* pen currently in range (tool reported down) */
+	bool invert_x;
+	bool invert_y;
+	bool swap_xy;
 };
 
 static int wacom_send(struct wacom_wez01 *w, u8 cmd)
@@ -180,15 +180,15 @@ static int wacom_query(struct wacom_wez01 *w)
 static void wacom_map_axes(struct wacom_wez01 *w, u16 *x, u16 *y,
 			   s8 *tx, s8 *ty)
 {
-	if (WACOM_X_INVERT) {
+	if (w->invert_x) {
 		*x = w->max_x - *x;
 		*tx = -*tx;
 	}
-	if (WACOM_Y_INVERT) {
+	if (w->invert_y) {
 		*y = w->max_y - *y;
 		*ty = -*ty;
 	}
-	if (WACOM_XY_SWITCH) {
+	if (w->swap_xy) {
 		swap(*x, *y);
 		swap(*tx, *ty);
 	}
@@ -267,7 +267,7 @@ static int wacom_setup_input(struct wacom_wez01 *w)
 	input->dev.parent = &w->client->dev;
 
 	/* the abs ranges are in the post-swap (panel) frame */
-	if (WACOM_XY_SWITCH) {
+	if (w->swap_xy) {
 		abs_x_max = w->max_y;
 		abs_y_max = w->max_x;
 	} else {
@@ -319,6 +319,10 @@ static int wacom_probe(struct i2c_client *client)
 
 	w->client = client;
 	i2c_set_clientdata(client, w);
+
+	w->invert_x = device_property_read_bool(dev, "wacom,inverted-x");
+	w->invert_y = device_property_read_bool(dev, "wacom,inverted-y");
+	w->swap_xy  = device_property_read_bool(dev, "wacom,swapped-x-y");
 
 	/* sane fallbacks in case the query is unreadable */
 	w->max_x = 21658;
