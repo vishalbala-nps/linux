@@ -126,7 +126,8 @@
 
 &i2c8 {
 	status = "okay";
-
+	clock-frequency = <400000>;
+	
 	wacom@56 {
 		compatible = "wacom,w90xx";
 		reg = <0x56>;
