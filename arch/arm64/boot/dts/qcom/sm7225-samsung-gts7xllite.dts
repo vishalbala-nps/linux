@@ -63,7 +63,7 @@
 		pinctrl-0 = <&gpio_keys_pin>;
 
 		key-volume-up {
-			label = "volume_up";
+			label = "Volume Up";
 			linux,code = <KEY_VOLUMEUP>;
 			gpios = <&pm6350_gpios 2 GPIO_ACTIVE_LOW>;
 		};
@@ -387,10 +387,6 @@
 };
 
 &dispcc {
-	status = "disabled";
-};
-
-&gpu {
 	status = "disabled";
 };
 
