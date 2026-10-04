@@ -70,20 +70,6 @@
 	};
 
 	reserved-memory {
-		framebuffer_mem: memory@a0000000 {
-			reg = <0 0xa0000000 0 (2560 * 1600 * 4)>;
-			no-map;
-		};
-
-		memory@efe01000 {
-			compatible = "qcom,rmtfs-mem";
-			reg = <0 0xefe01000 0 0x600000>;
-			no-map;
-
-			qcom,client-id = <1>;
-			qcom,vmid = <QCOM_SCM_VMID_MSS_MSA>;
-		};
-
 		pil_adsp_mem: memory@84800000 {
 			reg = <0x0 0x84800000 0x0 0x4000000>;
 			no-map;
@@ -91,11 +77,6 @@
 
 		pil_camera_mem: memory@88800000 {
 			reg = <0x0 0x88800000 0x0 0x500000>;
-			no-map;
-		};
-
-		pil_cdsp_mem: memory@89700000 {
-			reg = <0x0 0x89700000 0x0 0x1e00000>;
 			no-map;
 		};
 
@@ -109,6 +90,16 @@
 			no-map;
 		};
 
+		pil_cdsp_mem: memory@89700000 {
+			reg = <0x0 0x89700000 0x0 0x1e00000>;
+			no-map;
+		};
+
+		framebuffer_mem: memory@a0000000 {
+			reg = <0 0xa0000000 0 (2560 * 1600 * 4)>;
+			no-map;
+		};
+
 		ramoops@b1b00000 {
 			compatible = "ramoops";
 			reg = <0x0 0xb1b00000 0x0 0x100000>;
@@ -116,6 +107,15 @@
 			console-size = <0x40000>;
 			ftrace-size = <0x40000>;
 			pmsg-size = <0x40000>;
+		};
+
+		memory@efe01000 {
+			compatible = "qcom,rmtfs-mem";
+			reg = <0 0xefe01000 0 0x600000>;
+			no-map;
+
+			qcom,client-id = <1>;
+			qcom,vmid = <QCOM_SCM_VMID_MSS_MSA>;
 		};
 	};
 };
