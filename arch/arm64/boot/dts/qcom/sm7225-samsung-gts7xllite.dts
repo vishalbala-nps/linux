@@ -386,6 +386,7 @@
 	status = "okay";
 };
 
+//Disabling dispcc for now to keep framebuffer alive
 &dispcc {
 	status = "disabled";
 };
