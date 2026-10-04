@@ -118,6 +118,31 @@
 			qcom,vmid = <QCOM_SCM_VMID_MSS_MSA>;
 		};
 	};
+
+	panel_avdd: regulator-panel-avdd {
+		compatible = "regulator-fixed";
+		regulator-name = "panel_buck_en";
+		gpio = <&tlmm 88 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+	};
+
+	panel_avee: regulator-panel-avee {
+		compatible = "regulator-fixed";
+		regulator-name = "panel_buck_en2";
+		gpio = <&tlmm 89 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+	};
+
+	panel_boost: regulator-panel-boost {
+		compatible = "regulator-fixed";
+		regulator-name = "panel_boost_en";
+		gpio = <&tlmm 72 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+		regulator-always-on;
+	};
 };
 
 &adsp {
@@ -386,9 +411,32 @@
 	status = "okay";
 };
 
-//Disabling dispcc for now to keep framebuffer alive
-&dispcc {
-	status = "disabled";
+&dispcc { status = "okay"; };
+&mdss  { status = "okay"; };
+
+&mdss_dsi0 {
+	vdda-supply = <&vreg_l22a>;
+	status = "okay";
+
+	panel: panel@0 {
+		compatible = "focaltech,ft8203-ts124qdm";
+		reg = <0>;
+		reset-gpios = <&tlmm 75 GPIO_ACTIVE_LOW>;
+		vddi-supply = <&vreg_l14a>;
+		avdd-supply = <&panel_avdd>;
+		avee-supply = <&panel_avee>;
+		port { panel_in: endpoint { remote-endpoint = <&mdss_dsi0_out>; }; };
+	};
+};
+
+&mdss_dsi0_out {
+	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&panel_in>;
+};
+
+&mdss_dsi0_phy {
+	vdds-supply = <&vreg_l18a>;
+	status = "okay";
 };
 
 &ipa {
@@ -403,6 +451,14 @@
 	firmware-name = "qcom/sm7225/Samsung/gts7xllite/modem.mbn";
 
 	status = "okay";
+};
+
+&gpu {
+	status = "okay";
+};
+
+&gpu_zap_shader {
+	firmware-name = "qcom/sm7225/Samsung/gts7xllite/a615_zap.mbn";
 };
 
 &pm6350_gpios {
