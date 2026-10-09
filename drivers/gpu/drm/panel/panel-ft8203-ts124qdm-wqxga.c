@@ -683,7 +683,7 @@ static int ft8203_ts124qdm_wqxga_probe(struct mipi_dsi_device *dsi)
 	ctx->dsc.slice_count = 2;
 	ctx->dsc.bits_per_component = 8;
 	ctx->dsc.bits_per_pixel = 8 << 4;
-	ctx->dsc.block_pred_enable = true;
+	ctx->dsc.block_pred_enable = false;
 	if (!no_dsc) {
 		dsi->dsc = &ctx->dsc;
 		dsi->dsc_slice_per_pkt = slice_per_pkt;
