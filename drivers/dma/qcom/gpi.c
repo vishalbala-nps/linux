@@ -1829,7 +1829,7 @@ gpi_prep_slave_sg(struct dma_chan *chan, struct scatterlist *sgl,
 	/* calculate # of elements required & available */
 	nr = gpi_ring_num_elements_avail(ch_ring);
 	if (nr < nr_tre) {
-		dev_err(dev, "not enough space in ring, avail:%u required:%u\n", nr, nr_tre);
+		dev_dbg(dev, "not enough space in ring, avail:%u required:%u\n", nr, nr_tre);
 		return NULL;
 	}
 

@@ -706,7 +706,7 @@ skip_tx_dma_map:
 	}
 
 	if (!desc) {
-		dev_err(gi2c->se.dev, "prep_slave_sg failed\n");
+		dev_dbg(gi2c->se.dev, "prep_slave_sg failed\n");
 		ret = -EIO;
 		goto err_config;
 	}
@@ -869,7 +869,7 @@ static int geni_i2c_gpi_xfer(struct geni_i2c_dev *gi2c, struct i2c_msg msgs[], i
 	return num;
 
 err:
-	dev_err(gi2c->se.dev, "GPI transfer failed: %d\n", ret);
+	dev_dbg(gi2c->se.dev, "GPI transfer failed: %d\n", ret);
 	dmaengine_terminate_sync(gi2c->rx_c);
 	dmaengine_terminate_sync(gi2c->tx_c);
 	if (gi2c->is_tx_multi_desc_xfer)
