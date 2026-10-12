@@ -11,7 +11,6 @@
 #include <linux/regulator/consumer.h>
 
 #include <drm/display/drm_dsc.h>
-#include <drm/display/drm_dsc_helper.h>
 
 /*
  * DSC in DSI video mode is the least exercised path in msm; allow turning it off
@@ -82,7 +81,6 @@ static int ft8203_ts124qdm_wqxga_on(struct ft8203_ts124qdm_wqxga *ctx)
 {
 	struct mipi_dsi_device *dsi = ctx->dsi;
 	struct device *dev = &dsi->dev;
-	struct drm_dsc_picture_parameter_set pps;
 	int ret;
 
 	dsi_dcs_write_seq(dsi, 0x00, 0x00);
@@ -430,41 +428,19 @@ static int ft8203_ts124qdm_wqxga_on(struct ft8203_ts124qdm_wqxga *ctx)
 	msleep(128);
 
 	/*
-	 * The DDIC needs the DSC picture parameter set from us: the stock device
-	 * tree sets samsung,no_qcom_pps, so the controller does not generate it.
-	 * msm fills in the derived fields of ctx->dsc while bringing the link
-	 * up, so the config is complete by the time we get here.
+	 * No PPS or compression-mode command: the stock kernel sends neither
+	 * (samsung,no_qcom_pps, nothing in the on-commands). The DDIC takes its
+	 * DSC parameters from the vendor B4 bank in the init sequence above, so
+	 * ctx->dsc must stay consistent with those values.
 	 */
 	if (no_dsc) {
-		/*
-		 * The init sequence above comes from the stock device tree,
-		 * which runs this panel compressed, so the DDIC is left
-		 * expecting a compressed stream. Tell it otherwise, or it
-		 * decodes our uncompressed pixels as garbage.
-		 */
 		ret = mipi_dsi_compression_mode(dsi, false);
 		if (ret < 0) {
 			dev_err(dev, "Failed to disable compression: %d\n", ret);
 			return ret;
 		}
-		goto skip_dsc;
 	}
 
-	drm_dsc_pps_payload_pack(&pps, &ctx->dsc);
-
-	ret = mipi_dsi_picture_parameter_set(dsi, &pps);
-	if (ret < 0) {
-		dev_err(dev, "Failed to send PPS: %d\n", ret);
-		return ret;
-	}
-
-	ret = mipi_dsi_compression_mode(dsi, true);
-	if (ret < 0) {
-		dev_err(dev, "Failed to enable compression: %d\n", ret);
-		return ret;
-	}
-
-skip_dsc:
 	ret = mipi_dsi_dcs_set_display_on(dsi);
 	if (ret < 0) {
 		dev_err(dev, "Failed to set display on: %d\n", ret);
