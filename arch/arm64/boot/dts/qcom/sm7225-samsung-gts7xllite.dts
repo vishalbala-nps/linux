@@ -26,6 +26,7 @@
 /delete-node/ &pil_video_mem;
 /delete-node/ &pil_cdsp_mem;
 /delete-node/ &ramoops;
+/delete-node/ &removed_region;
 
 / {
 	model = "Samsung Galaxy Tab S7 FE LTE";
