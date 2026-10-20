@@ -160,6 +160,15 @@
 	status = "okay";
 };
 
+&i2c7 {
+       status = "okay";
+
+		fuel-gauge@71 {
+			compatible = "siliconmitus,sm5714-fuelgauge";
+			reg = <0x71>;
+		};
+};
+
 &i2c8 {
 	status = "okay";
 	clock-frequency = <400000>;

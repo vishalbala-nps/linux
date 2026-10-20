@@ -1196,4 +1196,11 @@ config MACSMC_POWER
 
 	  Say Y or M here if you have an Apple Silicon based Mac.
 
+config BATTERY_SM5714
+	tristate "Siliconmitus SM5714 fuel gauge"
+	depends on I2C
+	help
+	  Say Y to enable support for the fuel gauge in the Siliconmitus
+	  SM5714 PMIC.
+
 endif # POWER_SUPPLY
