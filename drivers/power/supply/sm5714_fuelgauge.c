@@ -182,7 +182,11 @@ static int sm5714_fg_probe(struct i2c_client *client)
 
 	fg->client = client;
 	i2c_set_clientdata(client, fg);
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 83a05be44 (Add Basic Fuel Gauge driver for SM5714)
 	ret = i2c_smbus_read_word_data(client, SM5714_FG_REG_DEVICE_ID);
 	if (ret < 0)
 		return dev_err_probe(dev, ret, "failed to read device id\n");
