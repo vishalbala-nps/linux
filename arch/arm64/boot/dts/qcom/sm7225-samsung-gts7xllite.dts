@@ -41,6 +41,15 @@
 		serial1 = &uart1;
 	};
 
+	battery: battery {
+		compatible = "simple-battery";
+		charge-full-design-microamp-hours = <10090000>;
+		voltage-min-design-microvolt = <3200000>;
+		constant-charge-voltage-max-microvolt = <4340000>;  /* 4380000 if the battery is new */
+		constant-charge-current-max-microamp = <3200000>;
+		charge-term-current-microamp = <500000>;
+	};
+
 	chosen {
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -158,6 +167,28 @@
 
 &gpi_dma1 {
 	status = "okay";
+};
+
+&i2c7 {
+       status = "okay";
+
+		sm5714_charger: charger@49 {
+			compatible = "siliconmitus,sm5714-charger";
+			reg = <0x49>;
+			monitored-battery = <&battery>;
+			/*
+			* Max current taken from USB. 3 A suits USB-C chargers that
+			* can supply it; use 1500000 if you often charge from
+			* laptops or unknown chargers.
+			*/
+			input-current-limit-microamp = <3000000>;
+		};
+
+		fuel-gauge@71 {
+			compatible = "siliconmitus,sm5714-fuelgauge";
+			reg = <0x71>;
+			power-supplies = <&sm5714_charger>;
+		};
 };
 
 &i2c8 {
