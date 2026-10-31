@@ -187,6 +187,7 @@
 		fuel-gauge@71 {
 			compatible = "siliconmitus,sm5714-fuelgauge";
 			reg = <0x71>;
+			monitored-battery = <&battery>;
 			power-supplies = <&sm5714_charger>;
 		};
 };

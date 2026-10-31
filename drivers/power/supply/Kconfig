@@ -1199,6 +1199,7 @@ config MACSMC_POWER
 config BATTERY_SM5714
 	tristate "Siliconmitus SM5714 fuel gauge"
 	depends on I2C
+	select REGMAP_I2C
 	help
 	  Say Y to enable support for the fuel gauge in the Siliconmitus
 	  SM5714 PMIC.
