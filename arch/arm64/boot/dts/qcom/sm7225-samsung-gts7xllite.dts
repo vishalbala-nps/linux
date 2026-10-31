@@ -45,7 +45,7 @@
 		compatible = "simple-battery";
 		charge-full-design-microamp-hours = <10090000>;
 		voltage-min-design-microvolt = <3200000>;
-		constant-charge-voltage-max-microvolt = <4340000>;  /* 4380000 if the battery is new */
+		constant-charge-voltage-max-microvolt = <4380000>;
 		constant-charge-current-max-microamp = <3200000>;
 		charge-term-current-microamp = <500000>;
 	};
