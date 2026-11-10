@@ -95,4 +95,12 @@ config TYPEC_MUX_WCD939X_USBSS
 	  common USB Type-C connector.
 	  If compiled as a module, the module will be named wcd939x-usbss.
 
+config TYPEC_MUX_SM5714
+	tristate "Silicon Mitus SM5714 MUIC USB 2.0 switch"
+	depends on I2C
+	select REGMAP_I2C
+	help
+	  Driver for the D+/D- switch (MUIC) in the Silicon Mitus SM5714
+	  PMIC, controlled as a USB Type-C mode switch.
+
 endmenu

@@ -10,11 +10,13 @@
  *   - enables hardware AICL at 4.5 V,
  *   - programs charge current, float voltage and top-off current from the
  *     monitored-battery node, plus the input current limit,
+ *   - follows the Type-C current advertisement when the SM5714 Type-C
+ *     driver supplies one, capped by the DT input limit,
  *   - enables charging, and re-applies all of it on cable insertion,
+ *   - provides a 5.1 V OTG boost regulator for USB host mode,
  *   - polls status, because interrupts go through the shared SM5714
  *     IRQ line which is not wired up yet.
- * No charger-type detection, no fast charging, no OTG, no battery
- * temperature gating.
+ * No fast charging, no battery temperature gating.
  */
 
 #include <linux/bitfield.h>
@@ -28,6 +30,7 @@
 #include <linux/power_supply.h>
 #include <linux/property.h>
 #include <linux/regmap.h>
+#include <linux/regulator/driver.h>
 #include <linux/workqueue.h>
 
 #define SM5714_CHG_STATUS1		0x0d
@@ -38,8 +41,11 @@
 #define  SM5714_STATUS2_AICL		BIT(0)
 #define  SM5714_STATUS2_NOBAT		BIT(2)
 #define  SM5714_STATUS2_CHGON		BIT(3)
-#define  SM5714_STATUS2_TOPOFF		BIT(5)
+#define  SM5714_STATUS2_TOPOFF		BIT(5)	/* top-off current reached */
+#define  SM5714_STATUS2_DONE		BIT(6)	/* top-off timer expired, stopped */
 #define  SM5714_STATUS2_WDTOFF		BIT(7)
+#define SM5714_CHG_INT1			0x01	/* INT1..INT5: clear on read */
+#define SM5714_CHG_INT5			0x05
 #define SM5714_CHG_CNTL1		0x13
 #define  SM5714_CNTL1_ENQ4FET		BIT(3)	/* charge enable */
 #define  SM5714_CNTL1_AICLEN		BIT(6)
@@ -47,6 +53,7 @@
 #define  SM5714_CNTL2_OPMODE		GENMASK(3, 0)
 #define  SM5714_OPMODE_SUSPEND		0x0
 #define  SM5714_OPMODE_CHG_ON		0x5
+#define  SM5714_OPMODE_USB_OTG		0x7
 #define SM5714_CHG_VBUSCNTL		0x15
 #define  SM5714_VBUSCNTL_LIMIT		GENMASK(6, 0)
 #define SM5714_CHG_CHGCNTL2		0x18	/* fast-charge current, 8 bits */
@@ -55,9 +62,16 @@
 #define  SM5714_CHGCNTL4_AUTOSTOP	BIT(6)
 #define SM5714_CHG_CHGCNTL5		0x1b
 #define  SM5714_CHGCNTL5_TOPOFF		GENMASK(4, 0)
+#define SM5714_CHG_STATUS3		0x0f
+#define  SM5714_STATUS3_OTG_OCP		BIT(2)
 #define SM5714_CHG_WDTCNTL		0x22
 #define  SM5714_WDTCNTL_EN		BIT(0)
 #define  SM5714_WDTCNTL_CLR_EXPIRED	BIT(6)
+#define SM5714_CHG_BSTCNTL1		0x23
+#define  SM5714_BSTCNTL1_VOUT		GENMASK(3, 0)
+#define  SM5714_BSTOUT_5100MV		0x6
+#define  SM5714_BSTCNTL1_OTG_CURR	GENMASK(7, 6)
+#define  SM5714_OTG_CURR_900MA		0x1
 #define SM5714_CHG_FACTORY1		0x25
 #define  SM5714_FACTORY1_FACMODE	BIT(0)
 #define SM5714_CHG_CHGCNTL11		0x46
@@ -90,6 +104,8 @@ struct sm5714_charger {
 	struct delayed_work poll_work;
 	struct mutex lock;		/* serialises limit changes and enable ramp */
 	u32 ilim_ua;
+	u32 ilim_max_ua;		/* DT ceiling for Type-C driven limits */
+	bool otg_on;			/* boosting VBUS out; READ_ONCE outside lock */
 	u32 ichg_ua;
 	u32 ichg_max_ua;		/* from DT; sysfs writes are capped here */
 	u32 float_uv;			/* 0: keep bootloader value */
@@ -277,6 +293,12 @@ static int sm5714_hw_init(struct sm5714_charger *chg)
 		return dev_err_probe(chg->dev, ret, "cannot read device id\n");
 	dev_info(chg->dev, "SM5714 charger, rev %u\n", val & 0x3);
 
+	ret = regmap_read(map, SM5714_CHG_FACTORY1, &val);
+	if (ret)
+		return ret;
+	if (val & SM5714_FACTORY1_FACMODE)
+		dev_warn(chg->dev, "factory mode bit set, input limit may be ignored\n");
+
 	/*
 	 * Nothing here kicks the charger watchdog yet, so turn it off and
 	 * clear a stale expiry left by the bootloader; an expired watchdog
@@ -318,7 +340,105 @@ static int sm5714_hw_init(struct sm5714_charger *chg)
 	return 0;
 }
 
+/* ---- OTG boost regulator ------------------------------------------------ */
+
+static int sm5714_otg_enable(struct regulator_dev *rdev)
+{
+	struct sm5714_charger *chg = rdev_get_drvdata(rdev);
+	int ret;
+
+	mutex_lock(&chg->lock);
+	ret = regmap_update_bits(chg->regmap, SM5714_CHG_BSTCNTL1,
+				 SM5714_BSTCNTL1_VOUT | SM5714_BSTCNTL1_OTG_CURR,
+				 FIELD_PREP(SM5714_BSTCNTL1_VOUT, SM5714_BSTOUT_5100MV) |
+				 FIELD_PREP(SM5714_BSTCNTL1_OTG_CURR, SM5714_OTG_CURR_900MA));
+	if (!ret)
+		ret = regmap_update_bits(chg->regmap, SM5714_CHG_CNTL2,
+					 SM5714_CNTL2_OPMODE,
+					 FIELD_PREP(SM5714_CNTL2_OPMODE,
+						    SM5714_OPMODE_USB_OTG));
+	if (!ret)
+		WRITE_ONCE(chg->otg_on, true);
+	mutex_unlock(&chg->lock);
+
+	return ret;
+}
+
+static int sm5714_otg_disable(struct regulator_dev *rdev)
+{
+	struct sm5714_charger *chg = rdev_get_drvdata(rdev);
+	int ret;
+
+	mutex_lock(&chg->lock);
+	ret = regmap_update_bits(chg->regmap, SM5714_CHG_CNTL2, SM5714_CNTL2_OPMODE,
+				 FIELD_PREP(SM5714_CNTL2_OPMODE, SM5714_OPMODE_CHG_ON));
+	if (!ret)
+		WRITE_ONCE(chg->otg_on, false);
+	mutex_unlock(&chg->lock);
+
+	return ret;
+}
+
+static int sm5714_otg_is_enabled(struct regulator_dev *rdev)
+{
+	struct sm5714_charger *chg = rdev_get_drvdata(rdev);
+	unsigned int val;
+	int ret;
+
+	ret = regmap_read(chg->regmap, SM5714_CHG_CNTL2, &val);
+	if (ret)
+		return ret;
+
+	return FIELD_GET(SM5714_CNTL2_OPMODE, val) == SM5714_OPMODE_USB_OTG;
+}
+
+static const struct regulator_ops sm5714_otg_ops = {
+	.enable = sm5714_otg_enable,
+	.disable = sm5714_otg_disable,
+	.is_enabled = sm5714_otg_is_enabled,
+};
+
+static const struct regulator_desc sm5714_otg_desc = {
+	.name = "otg-vbus",
+	.of_match = "otg-vbus",
+	.type = REGULATOR_VOLTAGE,
+	.owner = THIS_MODULE,
+	.ops = &sm5714_otg_ops,
+	.n_voltages = 1,
+	.fixed_uV = 5100000,
+};
+
 /* ---- power_supply class ------------------------------------------------- */
+
+/*
+ * The Type-C driver (our supplier) advertises the source's current. Follow
+ * it, capped by the DT input limit. Nothing attached or no Type-C driver:
+ * keep the current limit.
+ */
+static void sm5714_external_power_changed(struct power_supply *psy)
+{
+	struct sm5714_charger *chg = power_supply_get_drvdata(psy);
+	union power_supply_propval val;
+	u32 ilim;
+
+	if (power_supply_get_property_from_supplier(psy,
+			POWER_SUPPLY_PROP_CURRENT_MAX, &val) || val.intval <= 0)
+		return;
+
+	ilim = clamp_t(u32, val.intval, SM5714_ILIM_MIN_UA, chg->ilim_max_ua);
+
+	mutex_lock(&chg->lock);
+	if (ilim != chg->ilim_ua) {
+		chg->ilim_ua = ilim;
+		if (!chg->otg_on && sm5714_set_ilim(chg, ilim))
+			dev_warn(chg->dev, "failed to set input limit\n");
+		else
+			dev_dbg(chg->dev, "input limit %u mA from Type-C\n", ilim / 1000);
+	}
+	mutex_unlock(&chg->lock);
+
+	power_supply_changed(psy);
+}
 
 static int sm5714_get_status(struct sm5714_charger *chg, int *status)
 {
@@ -332,10 +452,15 @@ static int sm5714_get_status(struct sm5714_charger *chg, int *status)
 	if (ret)
 		return ret;
 
-	if (st2 & SM5714_STATUS2_TOPOFF)
-		*status = POWER_SUPPLY_STATUS_FULL;
-	else if (st2 & SM5714_STATUS2_CHGON)
+	/*
+	 * Termination is two-step: TOPOFF when the current falls to the
+	 * top-off level (charging continues for the top-off timer), then
+	 * DONE when the timer expires and CHGON clears.
+	 */
+	if (st2 & SM5714_STATUS2_CHGON)
 		*status = POWER_SUPPLY_STATUS_CHARGING;
+	else if (st2 & (SM5714_STATUS2_DONE | SM5714_STATUS2_TOPOFF))
+		*status = POWER_SUPPLY_STATUS_FULL;
 	else if (st1 & SM5714_STATUS1_VBUSPOK)
 		*status = POWER_SUPPLY_STATUS_NOT_CHARGING;
 	else
@@ -354,6 +479,11 @@ static int sm5714_get_property(struct power_supply *psy,
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_ONLINE:
+		/* While boosting, VBUS is our own output, not a charger */
+		if (READ_ONCE(chg->otg_on)) {
+			val->intval = 0;
+			return 0;
+		}
 		ret = regmap_read(chg->regmap, SM5714_CHG_STATUS1, &reg);
 		if (ret)
 			return ret;
@@ -361,6 +491,10 @@ static int sm5714_get_property(struct power_supply *psy,
 		return 0;
 
 	case POWER_SUPPLY_PROP_STATUS:
+		if (READ_ONCE(chg->otg_on)) {
+			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+			return 0;
+		}
 		return sm5714_get_status(chg, &val->intval);
 
 	case POWER_SUPPLY_PROP_CHARGE_TYPE:
@@ -462,13 +596,15 @@ static const struct power_supply_desc sm5714_desc = {
 	.get_property = sm5714_get_property,
 	.set_property = sm5714_set_property,
 	.property_is_writeable = sm5714_property_is_writeable,
+	.external_power_changed = sm5714_external_power_changed,
 };
 
 /* ---- status polling ----------------------------------------------------- */
 
 #define SM5714_ST1_WATCH	(SM5714_STATUS1_VBUSPOK | SM5714_STATUS1_VBUSOVP)
 #define SM5714_ST2_WATCH	(SM5714_STATUS2_CHGON | SM5714_STATUS2_TOPOFF | \
-				 SM5714_STATUS2_WDTOFF | SM5714_STATUS2_NOBAT)
+				 SM5714_STATUS2_DONE | SM5714_STATUS2_WDTOFF | \
+				 SM5714_STATUS2_NOBAT)
 
 static void sm5714_poll_work(struct work_struct *work)
 {
@@ -484,13 +620,23 @@ static void sm5714_poll_work(struct work_struct *work)
 	/*
 	 * On cable insertion re-apply all limits and the charge enable.
 	 * Unknown whether VBUS removal resets them; this is cheap insurance.
+	 * Not while boosting: then VBUS is our own OTG output.
 	 */
 	if ((st1 & SM5714_STATUS1_VBUSPOK) &&
 	    !(chg->last_st1 & SM5714_STATUS1_VBUSPOK)) {
 		mutex_lock(&chg->lock);
-		if (sm5714_apply_limits(chg) || sm5714_enable_charging(chg))
+		if (!chg->otg_on &&
+		    (sm5714_apply_limits(chg) || sm5714_enable_charging(chg)))
 			dev_warn(chg->dev, "failed to re-enable charging\n");
 		mutex_unlock(&chg->lock);
+	}
+
+	if (READ_ONCE(chg->otg_on)) {
+		unsigned int st3;
+
+		if (!regmap_read(chg->regmap, SM5714_CHG_STATUS3, &st3) &&
+		    (st3 & SM5714_STATUS3_OTG_OCP))
+			dev_warn_ratelimited(chg->dev, "OTG over-current\n");
 	}
 
 	changed = ((st1 ^ chg->last_st1) & SM5714_ST1_WATCH) ||
@@ -546,10 +692,17 @@ static int sm5714_parse_battery(struct sm5714_charger *chg,
 	return 0;
 }
 
+/* Keep debugfs dumps away from the clear-on-read interrupt registers */
+static bool sm5714_precious_reg(struct device *dev, unsigned int reg)
+{
+	return reg >= SM5714_CHG_INT1 && reg <= SM5714_CHG_INT5;
+}
+
 static const struct regmap_config sm5714_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
 	.max_register = SM5714_CHG_DEVICEID,
+	.precious_reg = sm5714_precious_reg,
 };
 
 static int sm5714_charger_probe(struct i2c_client *client)
@@ -557,6 +710,8 @@ static int sm5714_charger_probe(struct i2c_client *client)
 	struct device *dev = &client->dev;
 	struct power_supply_config psy_cfg = {};
 	struct power_supply_battery_info *bi = NULL;
+	struct regulator_config rcfg = {};
+	struct regulator_dev *rdev;
 	struct sm5714_charger *chg;
 	int ret;
 
@@ -573,9 +728,11 @@ static int sm5714_charger_probe(struct i2c_client *client)
 	if (IS_ERR(chg->regmap))
 		return dev_err_probe(dev, PTR_ERR(chg->regmap), "regmap init failed\n");
 
-	chg->ilim_ua = SM5714_DEFAULT_ILIM_UA;
-	device_property_read_u32(dev, "input-current-limit-microamp", &chg->ilim_ua);
-	chg->ilim_ua = clamp_t(u32, chg->ilim_ua, SM5714_ILIM_MIN_UA, SM5714_ILIM_MAX_UA);
+	chg->ilim_max_ua = SM5714_DEFAULT_ILIM_UA;
+	device_property_read_u32(dev, "input-current-limit-microamp", &chg->ilim_max_ua);
+	chg->ilim_max_ua = clamp_t(u32, chg->ilim_max_ua,
+				   SM5714_ILIM_MIN_UA, SM5714_ILIM_MAX_UA);
+	chg->ilim_ua = chg->ilim_max_ua;
 
 	psy_cfg.drv_data = chg;
 	psy_cfg.fwnode = dev_fwnode(dev);
@@ -596,6 +753,14 @@ static int sm5714_charger_probe(struct i2c_client *client)
 	ret = sm5714_hw_init(chg);
 	if (ret)
 		return dev_err_probe(dev, ret, "hardware init failed\n");
+
+	/* OTG boost for USB host mode, constraints from the otg-vbus child */
+	rcfg.dev = dev;
+	rcfg.driver_data = chg;
+	rdev = devm_regulator_register(dev, &sm5714_otg_desc, &rcfg);
+	if (IS_ERR(rdev))
+		return dev_err_probe(dev, PTR_ERR(rdev),
+				     "failed to register OTG regulator\n");
 
 	regmap_read(chg->regmap, SM5714_CHG_STATUS1, &chg->last_st1);
 	regmap_read(chg->regmap, SM5714_CHG_STATUS2, &chg->last_st2);
