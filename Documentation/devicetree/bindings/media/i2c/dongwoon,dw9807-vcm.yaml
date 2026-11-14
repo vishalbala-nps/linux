@@ -16,10 +16,20 @@ description: |
 
 properties:
   compatible:
-    const: dongwoon,dw9807-vcm
+    oneOf:
+      - const: dongwoon,dw9807-vcm
+      - items:
+          - const: dongwoon,dw9808
+          - const: dongwoon,dw9807-vcm
 
   reg:
     maxItems: 1
+
+  vdd-supply:
+    description: VCM driver power supply
+
+  vio-supply:
+    description: I2C interface power supply
 
 required:
   - compatible

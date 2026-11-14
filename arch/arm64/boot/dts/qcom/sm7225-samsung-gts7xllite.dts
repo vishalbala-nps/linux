@@ -13,6 +13,7 @@
 #include <dt-bindings/firmware/qcom,scm.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
+#include <dt-bindings/media/video-interfaces.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
 #include "sm7225.dtsi"
@@ -162,6 +163,28 @@
 		enable-active-high;
 		regulator-boot-on;
 		regulator-always-on;
+	};
+
+	/* GPIO48 "RCAM1_VANA": rear camera sensor + VCM */
+	rcam_vana: regulator-rcam-vana {
+		compatible = "regulator-fixed";
+		regulator-name = "rcam_vana";
+		gpio = <&tlmm 48 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		pinctrl-0 = <&rcam_vana_en_default>;
+		pinctrl-names = "default";
+	};
+
+	/* GPIO49 "CAM_VDDIO_1P8": shared by the rear and front cameras */
+	cam_vio_1p8: regulator-cam-vio {
+		compatible = "regulator-fixed";
+		regulator-name = "cam_vio_1p8";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		gpio = <&tlmm 49 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		pinctrl-0 = <&cam_vio_en_default>;
+		pinctrl-names = "default";
 	};
 };
 
@@ -530,6 +553,78 @@
 	};
 };
 
+&camss {
+	vdd-csiphy0-0p9-supply = <&vreg_l18a>;
+	vdd-csiphy0-1p25-supply = <&vreg_l22a>;
+	vdd-csiphy1-0p9-supply = <&vreg_l18a>;
+	vdd-csiphy1-1p25-supply = <&vreg_l22a>;
+	vdd-csiphy2-0p9-supply = <&vreg_l18a>;
+	vdd-csiphy2-1p25-supply = <&vreg_l22a>;
+	vdd-csiphy3-0p9-supply = <&vreg_l18a>;
+	vdd-csiphy3-1p25-supply = <&vreg_l22a>;
+
+	status = "okay";
+
+	ports {
+		port@0 {
+			csiphy0_ep: endpoint {
+				data-lanes = <0 1 2 3>;
+				bus-type = <MEDIA_BUS_TYPE_CSI2_DPHY>;
+				remote-endpoint = <&rear_cam_ep>;
+			};
+		};
+	};
+};
+
+&cci0 {
+	status = "okay";
+};
+
+&cci0_i2c0 {
+	/* Rear: Sony IMX355, downstream slave-addr 0x34 (8-bit) */
+	rear_cam: camera@1a {
+		compatible = "sony,imx355";
+		reg = <0x1a>;
+
+		clocks = <&camcc CAMCC_MCLK0_CLK>;
+		assigned-clocks = <&camcc CAMCC_MCLK0_CLK>;
+		/* downstream runs 24 MHz; this tree's imx355 only knows 19.2 MHz */
+		assigned-clock-rates = <19200000>;
+
+		reset-gpios = <&tlmm 34 GPIO_ACTIVE_LOW>;
+
+		avdd-supply = <&rcam_vana>;
+		dvdd-supply = <&rcam_vana>;
+		dovdd-supply = <&cam_vio_1p8>;
+
+		pinctrl-0 = <&cam_mclk0_default>, <&rcam_reset_default>;
+		pinctrl-names = "default";
+
+		orientation = <1>; /* MEDIA_ORIENTATION_BACK */
+
+		lens-focus = <&rear_vcm>;
+
+		port {
+			rear_cam_ep: endpoint {
+				data-lanes = <1 2 3 4>;
+				link-frequencies = /bits/ 64 <360000000>;
+				remote-endpoint = <&csiphy0_ep>;
+			};
+		};
+	};
+};
+
+&cci0_i2c1 {
+	/* Rear AF: Dongwoon DW9808, downstream slave-addr 0x18 (8-bit) */
+	rear_vcm: lens@c {
+		compatible = "dongwoon,dw9808", "dongwoon,dw9807-vcm";
+		reg = <0x0c>;
+
+		vdd-supply = <&rcam_vana>;
+		vio-supply = <&cam_vio_1p8>;
+	};
+};
+
 &cdsp {
 	firmware-name = "qcom/sm7225/Samsung/gts7xllite/cdsp.mbn";
 
@@ -646,6 +741,34 @@
 };
 
 &tlmm {
+	cam_mclk0_default: cam-mclk0-default-state {
+		pins = "gpio29";
+		function = "cam_mclk0";
+		drive-strength = <4>;
+		bias-disable;
+	};
+
+	rcam_reset_default: rcam-reset-default-state {
+		pins = "gpio34";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	rcam_vana_en_default: rcam-vana-en-default-state {
+		pins = "gpio48";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	cam_vio_en_default: cam-vio-en-default-state {
+		pins = "gpio49";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
 	qup_uart1_sleep_cts: qup-uart1-sleep-cts-state {
 		pins = "gpio61";
 		function = "gpio";
@@ -770,4 +893,3 @@
 
 	status = "okay";
 };
-

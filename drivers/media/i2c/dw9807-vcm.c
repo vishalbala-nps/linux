@@ -7,6 +7,7 @@
 #include <linux/iopoll.h>
 #include <linux/module.h>
 #include <linux/pm_runtime.h>
+#include <linux/regulator/consumer.h>
 #include <media/v4l2-ctrls.h>
 #include <media/v4l2-device.h>
 
@@ -38,9 +39,18 @@
 
 #define MAX_RETRY		10
 
+/* Time to wait after enabling the supplies before talking to the chip */
+#define DW9807_PWR_ON_DELAY_US	1000
+
+static const char * const dw9807_supply_names[] = {
+	"vdd",	/* VCM driver supply */
+	"vio",	/* I2C interface supply */
+};
+
 struct dw9807_device {
 	struct v4l2_ctrl_handler ctrls_vcm;
 	struct v4l2_subdev sd;
+	struct regulator_bulk_data supplies[ARRAY_SIZE(dw9807_supply_names)];
 	u16 current_val;
 };
 
@@ -116,9 +126,21 @@ static int dw9807_set_ctrl(struct v4l2_ctrl *ctrl)
 
 	if (ctrl->id == V4L2_CID_FOCUS_ABSOLUTE) {
 		struct i2c_client *client = v4l2_get_subdevdata(&dev_vcm->sd);
+		int ret;
 
 		dev_vcm->current_val = ctrl->val;
-		return dw9807_set_dac(client, ctrl->val);
+
+		/*
+		 * If the device is powered off, the supplies may be off too.
+		 * The new position is applied by dw9807_vcm_resume().
+		 */
+		if (!pm_runtime_get_if_in_use(&client->dev))
+			return 0;
+
+		ret = dw9807_set_dac(client, ctrl->val);
+		pm_runtime_put(&client->dev);
+
+		return ret;
 	}
 
 	return -EINVAL;
@@ -127,6 +149,28 @@ static int dw9807_set_ctrl(struct v4l2_ctrl *ctrl)
 static const struct v4l2_ctrl_ops dw9807_vcm_ctrl_ops = {
 	.s_ctrl = dw9807_set_ctrl,
 };
+
+static int dw9807_vcm_suspend(struct device *dev);
+
+static int dw9807_power_on(struct dw9807_device *dw9807_dev)
+{
+	int ret;
+
+	ret = regulator_bulk_enable(ARRAY_SIZE(dw9807_dev->supplies),
+				    dw9807_dev->supplies);
+	if (ret)
+		return ret;
+
+	usleep_range(DW9807_PWR_ON_DELAY_US, DW9807_PWR_ON_DELAY_US + 100);
+
+	return 0;
+}
+
+static void dw9807_power_off(struct dw9807_device *dw9807_dev)
+{
+	regulator_bulk_disable(ARRAY_SIZE(dw9807_dev->supplies),
+			       dw9807_dev->supplies);
+}
 
 static int dw9807_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 {
@@ -185,6 +229,16 @@ static int dw9807_probe(struct i2c_client *client)
 	if (dw9807_dev == NULL)
 		return -ENOMEM;
 
+	for (unsigned int i = 0; i < ARRAY_SIZE(dw9807_supply_names); i++)
+		dw9807_dev->supplies[i].supply = dw9807_supply_names[i];
+
+	rval = devm_regulator_bulk_get(&client->dev,
+				       ARRAY_SIZE(dw9807_dev->supplies),
+				       dw9807_dev->supplies);
+	if (rval)
+		return dev_err_probe(&client->dev, rval,
+				     "failed to get regulators\n");
+
 	v4l2_i2c_subdev_init(&dw9807_dev->sd, client, &dw9807_ops);
 	dw9807_dev->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 	dw9807_dev->sd.internal_ops = &dw9807_int_ops;
@@ -199,9 +253,16 @@ static int dw9807_probe(struct i2c_client *client)
 
 	dw9807_dev->sd.entity.function = MEDIA_ENT_F_LENS;
 
+	/* Runtime PM below starts out assuming the device is powered */
+	rval = dw9807_power_on(dw9807_dev);
+	if (rval) {
+		dev_err_probe(&client->dev, rval, "failed to enable regulators\n");
+		goto err_cleanup;
+	}
+
 	rval = v4l2_async_register_subdev(&dw9807_dev->sd);
 	if (rval < 0)
-		goto err_cleanup;
+		goto err_power_off;
 
 	pm_runtime_set_active(&client->dev);
 	pm_runtime_enable(&client->dev);
@@ -209,6 +270,8 @@ static int dw9807_probe(struct i2c_client *client)
 
 	return 0;
 
+err_power_off:
+	dw9807_power_off(dw9807_dev);
 err_cleanup:
 	v4l2_ctrl_handler_free(&dw9807_dev->ctrls_vcm);
 	media_entity_cleanup(&dw9807_dev->sd.entity);
@@ -222,6 +285,10 @@ static void dw9807_remove(struct i2c_client *client)
 	struct dw9807_device *dw9807_dev = sd_to_dw9807_vcm(sd);
 
 	pm_runtime_disable(&client->dev);
+	if (!pm_runtime_status_suspended(&client->dev)) {
+		dw9807_vcm_suspend(&client->dev);
+		pm_runtime_set_suspended(&client->dev);
+	}
 
 	dw9807_subdev_cleanup(dw9807_dev);
 }
@@ -254,6 +321,8 @@ static int __maybe_unused dw9807_vcm_suspend(struct device *dev)
 		return ret;
 	}
 
+	dw9807_power_off(dw9807_dev);
+
 	return 0;
 }
 
@@ -271,10 +340,17 @@ static int  __maybe_unused dw9807_vcm_resume(struct device *dev)
 	const char tx_data[2] = { DW9807_CTL_ADDR, 0x00 };
 	int ret, val;
 
+	ret = dw9807_power_on(dw9807_dev);
+	if (ret) {
+		dev_err(dev, "failed to enable regulators: %d\n", ret);
+		return ret;
+	}
+
 	/* Power on */
 	ret = i2c_master_send(client, tx_data, sizeof(tx_data));
 	if (ret < 0) {
 		dev_err(&client->dev, "I2C write CTL fail ret = %d\n", ret);
+		dw9807_power_off(dw9807_dev);
 		return ret;
 	}
 
