@@ -16,6 +16,9 @@
 #include <dt-bindings/media/video-interfaces.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/sound/qcom,q6asm.h>
+
 #include "sm7225.dtsi"
 #include "pm6150l.dtsi"
 #include "pm6350.dtsi"
@@ -290,6 +293,39 @@
 
 		wacom,swapped-x-y;
 		wacom,inverted-x;
+	};
+};
+
+&i2c10 {
+	clock-frequency = <400000>;
+	status = "okay";
+
+	speaker_amp_l: audio-codec@30 {
+		compatible = "cirrus,cs35l45";
+		reg = <0x30>;
+		interrupts-extended = <&tlmm 54 IRQ_TYPE_LEVEL_LOW>;
+		reset-gpios = <&tlmm 55 GPIO_ACTIVE_HIGH>;
+		pinctrl-0 = <&speaker_amp_default>;
+		pinctrl-names = "default";
+		cirrus,asp-sdout-hiz-ctrl = <3>;
+		sound-name-prefix = "Left";
+		#sound-dai-cells = <1>;
+
+		cirrus,gpio-ctrl1 { gpio-ctrl = <2>; };
+		cirrus,gpio-ctrl2 { gpio-ctrl = <2>; };
+	};
+
+	speaker_amp_r: audio-codec@31 {
+		compatible = "cirrus,cs35l45";
+		reg = <0x31>;
+		interrupts-extended = <&tlmm 54 IRQ_TYPE_LEVEL_LOW>;
+		reset-gpios = <&tlmm 55 GPIO_ACTIVE_HIGH>;
+		cirrus,asp-sdout-hiz-ctrl = <3>;
+		sound-name-prefix = "Right";
+		#sound-dai-cells = <1>;
+
+		cirrus,gpio-ctrl1 { gpio-ctrl = <2>; };
+		cirrus,gpio-ctrl2 { gpio-ctrl = <2>; };
 	};
 };
 
@@ -800,12 +836,73 @@
 		bias-pull-up;
 	};
 
+	speaker_amp_default: speaker-amp-default-state {
+		pins = "gpio54", "gpio55";
+		function = "gpio";
+		bias-disable;
+	};
+
     wacom_irq_default: wacom-irq-state {
         pins = "gpio85";
         function = "gpio";
         bias-disable;
         input-enable;
     };
+};
+
+&lpass_tlmm {
+	quat_mi2s_active: quat-mi2s-active-state {
+		clk-pins {
+			pins = "gpio0";
+			function = "qua_mi2s_sclk";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		ws-pins {
+			pins = "gpio1";
+			function = "qua_mi2s_ws";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		data-pins {
+			pins = "gpio2";
+			function = "qua_mi2s_data";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+};
+
+&q6afedai {
+	dai@22 {
+		reg = <QUATERNARY_MI2S_RX>;
+		qcom,sd-lines = <0>;
+	};
+};
+
+&q6asmdai {
+	dai@0 {
+		reg = <0>;
+	};
+};
+
+&sound {
+	compatible = "fairphone,fp4-sndcard";	/* testing only; add your own later */
+	model = "Samsung Galaxy Tab S7 FE";
+	pinctrl-0 = <&quat_mi2s_active>;
+	pinctrl-names = "default";
+
+	mm1-dai-link {
+		link-name = "MultiMedia1";
+		cpu { sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA1>; };
+	};
+
+	speaker-dai-link {
+		link-name = "Speaker Playback";
+		cpu      { sound-dai = <&q6afedai QUATERNARY_MI2S_RX>; };
+		platform { sound-dai = <&q6routing>; };
+		codec    { sound-dai = <&speaker_amp_l 0>, <&speaker_amp_r 0>; };
+	};
 };
 
 &uart1 {
